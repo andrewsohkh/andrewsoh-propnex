@@ -98,7 +98,7 @@
   .portrait{
     aspect-ratio:4/5; border-radius:var(--r); border:1px solid var(--line);
     background:
-      radial-gradient(120% 90% at 70% 10%, #1d3career 0, transparent 60%),
+      radial-gradient(120% 90% at 70% 10%, #1f3a63 0, transparent 60%),
       linear-gradient(160deg,#1b2e4d, #15263F);
     background-color:var(--ink);
     position:relative; overflow:hidden; display:flex; align-items:flex-end; padding:22px;
@@ -108,11 +108,17 @@
   .portrait .mono-tag2{position:absolute; top:16px; right:16px; color:var(--ink-soft); font-size:11px}
   .portrait .monogram{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    font-family:"Archivo",sans-serif; font-weight:900; font-size:118px; color:rgba(255,255,255,.07); letter-spacing:-.04em;
+    font-family:"Archivo",sans-serif; font-weight:900; font-size:118px; color:rgba(255,255,255,.14); letter-spacing:-.04em;
   }
   .portrait .who{position:relative; color:#fff}
   .portrait .who .nm{font-family:"Archivo",sans-serif; font-weight:800; font-size:22px}
   .portrait .who .role{color:var(--ink-soft); font-size:13.5px; margin-top:2px}
+  .portrait .portrait-photo{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 18%; z-index:0}
+  .portrait .scrim{position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:linear-gradient(to bottom, rgba(21,38,63,.45) 0%, rgba(21,38,63,0) 26%, rgba(21,38,63,0) 50%, rgba(21,38,63,.9) 100%)}
+  .portrait .mono-tag,.portrait .mono-tag2{z-index:2}
+  .portrait .monogram{z-index:0}
+  .portrait .who{z-index:2}
 
   @media (max-width:880px){
     .hero-in{grid-template-columns:1fr; gap:34px; padding:54px 24px 50px}
@@ -262,6 +268,8 @@
 
     <!-- Portrait: drop your photo as a background-image on .portrait, or keep the monogram -->
     <div class="portrait" aria-label="Andrew Soh">
+      <img class="portrait-photo" src="andrew.jpg" alt="Andrew Soh" />
+      <div class="scrim"></div>
       <span class="mono-tag mono">PROPNEX</span>
       <span class="mono-tag2 mono">SG · D01–D28</span>
       <span class="monogram">AS</span>
@@ -476,6 +484,7 @@
   const WHATSAPP_NUMBER = "6596729144";          // your number, digits only, with country code (65 for SG)
   const EMAIL           = "andrewsohkh@gmail.com";       // your email
   const CONCIERGE_URL   = "concierge.html";                   // paste your PropertyAgent / concierge deployment URL here
+  const PORTRAIT_MODE   = "photo";   // "photo" = show andrew.jpg if present (falls back to monogram) | "monogram" = always show the AS monogram
   /* =========================== */
 
   document.getElementById('yr').textContent = new Date().getFullYear();
@@ -488,6 +497,20 @@
   if (emailDirect) emailDirect.href = "mailto:" + EMAIL;
   const concierge = document.getElementById('concierge-link');
   if (concierge) concierge.href = CONCIERGE_URL;
+
+  // Portrait: monogram vs photo, driven by PORTRAIT_MODE above.
+  (function(){
+    var card = document.querySelector('.portrait'); if(!card) return;
+    var img = card.querySelector('.portrait-photo');
+    var mono = card.querySelector('.monogram');
+    var scrim = card.querySelector('.scrim');
+    function toMonogram(){ if(img) img.style.display='none'; if(scrim) scrim.style.display='none'; if(mono) mono.style.opacity=''; }
+    function toPhoto(){ if(mono) mono.style.opacity='0'; if(scrim) scrim.style.display=''; if(img) img.style.display=''; }
+    if (PORTRAIT_MODE === "monogram" || !img){ toMonogram(); return; }
+    img.addEventListener('load', toPhoto);
+    img.addEventListener('error', toMonogram);
+    if (img.complete){ img.naturalWidth > 0 ? toPhoto() : toMonogram(); }
+  })();
 
   // Lead form -> compose a WhatsApp message (no backend needed).
   // To use a form service or your own endpoint instead, replace the body of this handler.
