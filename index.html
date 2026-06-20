@@ -168,6 +168,23 @@
   .fact .v{font-weight:600; text-align:right}
   @media (max-width:760px){ .about{grid-template-columns:1fr; gap:28px} }
 
+  /* ---------- Market Pulse ---------- */
+  .pulse-card{background:#fff; border:1px solid var(--line); border-radius:var(--r); padding:28px 30px; max-width:840px}
+  .pulse-top{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid var(--line)}
+  .pulse-live{display:inline-flex; align-items:center; gap:8px; font-family:"Space Mono",monospace; font-size:12px; letter-spacing:.04em; text-transform:uppercase; color:var(--steel)}
+  .pulse-live .dot{width:8px; height:8px; border-radius:50%; background:var(--accent); animation:pulseDot 2.4s ease-out infinite}
+  @keyframes pulseDot{0%{box-shadow:0 0 0 0 rgba(224,53,58,.45)}70%{box-shadow:0 0 0 7px rgba(224,53,58,0)}100%{box-shadow:0 0 0 0 rgba(224,53,58,0)}}
+  .pulse-date{font-family:"Space Mono",monospace; font-size:12.5px; color:var(--steel)}
+  .pulse-body,.pulse-more{font-size:15px; line-height:1.62; color:#33415a}
+  .pulse-body h3,.pulse-more h3{font-size:16.5px; font-weight:700; color:var(--ink); margin:16px 0 8px}
+  .pulse-body h3:first-child{margin-top:0}
+  .pulse-body ul,.pulse-more ul{margin:8px 0; padding-left:20px}
+  .pulse-body li,.pulse-more li{margin-bottom:6px}
+  .pulse-body p,.pulse-more p{margin:8px 0}
+  .pulse-body a,.pulse-more a{color:var(--accent)}
+  .pulse-toggle{margin-top:14px; background:none; border:none; padding:0; font:inherit; font-size:14px; font-weight:600; color:var(--accent); cursor:pointer; border-bottom:1px dotted var(--accent)}
+  .pulse-foot{margin-top:18px; padding-top:14px; border-top:1px solid var(--line); font-family:"Space Mono",monospace; font-size:11px; color:var(--steel)}
+
   /* ---------- Contact ---------- */
   .contact{background:var(--panel); border-top:1px solid var(--line); border-bottom:1px solid var(--line)}
   .contact-in{display:grid; grid-template-columns:.8fr 1fr; gap:48px; align-items:start}
@@ -357,11 +374,32 @@
 </section>
 
 <!-- ===================== CONTACT ===================== -->
+<!-- ===================== MARKET PULSE ===================== -->
+<section id="pulse" hidden>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="idx">04 / PULSE</span>
+      <h2>Singapore market pulse</h2>
+      <span class="sub">A short daily read on the market — refreshed automatically each morning.</span>
+    </div>
+    <div class="pulse-card" id="pulse-card">
+      <div class="pulse-top">
+        <span class="pulse-live"><span class="dot"></span> Daily brief</span>
+        <span class="pulse-date" id="pulse-date">—</span>
+      </div>
+      <div class="pulse-body" id="pulse-teaser"></div>
+      <div class="pulse-more" id="pulse-more" hidden></div>
+      <button class="pulse-toggle" id="pulse-toggle" type="button" hidden>Read the full brief →</button>
+      <div class="pulse-foot">Curated from public sources · not financial advice.</div>
+    </div>
+  </div>
+</section>
+
 <section id="contact" class="contact">
   <div class="wrap">
     <div class="contact-in">
       <div>
-        <div class="eyebrow">04 / TALK</div>
+        <div class="eyebrow">05 / TALK</div>
         <h2 style="margin-top:14px">Tell me what you're thinking</h2>
         <p class="lead">No obligation — a short message is enough to get started. I'll reply personally.</p>
         <div class="ways">
@@ -462,6 +500,67 @@
       (msg ? "%0AMessage: " + msg : "");
     window.open(waBase + "?text=" + text, "_blank");
   });
+
+  /* ====== Market Pulse: load + render the daily brief ====== */
+  function mdInline(t){
+    return t
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+      .replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")
+      .replace(/\[([^\]]+)\]\((https?:[^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  }
+  function mdBlocks(md){
+    var lines = md.replace(/\r/g,"").split("\n"), blocks=[], i=0;
+    while(i<lines.length){
+      var ln=lines[i];
+      if(!ln.trim()){i++;continue;}
+      var h=ln.match(/^(#{1,6})\s+(.*)$/);
+      if(h){ blocks.push({type:"h",html:"<h3>"+mdInline(h[2].trim())+"</h3>"}); i++; continue; }
+      if(/^\s*[-*]\s+/.test(ln)){
+        var items=[];
+        while(i<lines.length && /^\s*[-*]\s+/.test(lines[i])){
+          items.push("<li>"+mdInline(lines[i].replace(/^\s*[-*]\s+/,"").trim())+"</li>"); i++;
+        }
+        blocks.push({type:"ul",html:"<ul>"+items.join("")+"</ul>"}); continue;
+      }
+      var para=[];
+      while(i<lines.length && lines[i].trim() && !/^(#{1,6})\s/.test(lines[i]) && !/^\s*[-*]\s+/.test(lines[i])){
+        para.push(lines[i].trim()); i++;
+      }
+      blocks.push({type:"p",html:"<p>"+mdInline(para.join(" "))+"</p>"});
+    }
+    return blocks;
+  }
+  function pulseSplit(blocks){
+    var cut=-1;
+    for(var k=0;k<blocks.length;k++){ if(blocks[k].type==="ul"){ cut=k; break; } }
+    if(cut===-1){ cut=Math.min(1, blocks.length-1); }
+    return {
+      teaser: blocks.slice(0,cut+1).map(function(b){return b.html;}).join(""),
+      more:   blocks.slice(cut+1).map(function(b){return b.html;}).join("")
+    };
+  }
+  (function(){
+    var sec=document.getElementById('pulse'); if(!sec) return;
+    fetch('market-news.json?ts='+Date.now())
+      .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+      .then(function(d){
+        var md=((d && d.markdown) || "").trim(); if(!md) throw 0;
+        var sp=pulseSplit(mdBlocks(md));
+        document.getElementById('pulse-date').textContent = d.updated || d.date || "";
+        document.getElementById('pulse-teaser').innerHTML = sp.teaser;
+        if(sp.more){
+          var more=document.getElementById('pulse-more');
+          var btn=document.getElementById('pulse-toggle');
+          more.innerHTML=sp.more; btn.hidden=false;
+          btn.addEventListener('click',function(){
+            if(more.hidden){ more.hidden=false; btn.textContent="Show less \u2191"; }
+            else { more.hidden=true; btn.textContent="Read the full brief \u2192"; }
+          });
+        }
+        sec.hidden=false;
+      })
+      .catch(function(){ /* no brief yet — section stays hidden */ });
+  })();
 </script>
 </body>
 </html>
