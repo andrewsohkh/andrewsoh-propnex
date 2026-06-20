@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PropNex Concierge — Andrew Soh</title>
+<meta name="description" content="Andrew Soh's AI property concierge — ask about buying, selling, renting, HDB eligibility, stamp duty and loans in Singapore." />
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  html, body { margin: 0; height: 100%; background: #F7F5F1; }
+  #root { height: 100%; }
+  @media (max-width: 860px) {
+    .pa-wrap { height: auto !important; min-height: 100vh; }
+    .pa-main { flex-direction: column !important; }
+    .pa-aside { width: 100% !important; }
+    .pa-chat { min-height: 60vh; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useRef, useEffect } = React;
+
+// ───────────── Config ─────────────
+const WORKER_URL = "https://concierge-proxy.andrewsohkh.workers.dev";
+const AGENT_WA   = "6596729144"; // Andrew's WhatsApp (country code + number)
+
+const AGENT = {
+  name: "Andrew",
+  agency: "PropNex",
+  tagline: "Singapore Property — Sales & Service Concierge",
+};
+
+const C = {
+  ink: "#0E1B2C", panel: "#16263B", canvas: "#F7F5F1", card: "#FFFFFF",
+  brass: "#C0904A", brassSoft: "#E7D3B1", line: "#E6E1D8", lineDark: "#2B405A",
+  text: "#1B2735", sub: "#5A6B7B", sage: "#4E7C5E", sageSoft: "#E4EFE7",
+  whatsapp: "#1FA855", err: "#B4543F",
+};
+
+// ───────────── Icons (inline SVG, lucide-style) ─────────────
+const mk = (children) => ({ size = 16, color = "currentColor", style }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color}
+       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={style}>{children}</svg>
+);
+const Home = mk(<><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></>);
+const RotateCcw = mk(<><path d="M3 2v6h6"/><path d="M3.51 9a9 9 0 1 0 2.13-3.36L3 8"/></>);
+const Send = mk(<><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></>);
+const ClipboardList = mk(<><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></>);
+const Sparkles = mk(<path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/>);
+const Target = mk(<><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></>);
+const Wallet = mk(<><path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H5a2 2 0 0 1-2-2V5"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/><path d="M18 12h.01"/></>);
+const MapPin = mk(<><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></>);
+const Clock = mk(<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>);
+const Landmark = mk(<><line x1="3" x2="21" y1="22" y2="22"/><line x1="6" x2="6" y1="18" y2="11"/><line x1="10" x2="10" y1="18" y2="11"/><line x1="14" x2="14" y1="18" y2="11"/><line x1="18" x2="18" y1="18" y2="11"/><polygon points="12 2 20 7 4 7"/></>);
+const BadgeCheck = mk(<><path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/></>);
+const User = mk(<><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>);
+const Phone = mk(<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92Z"/>);
+const Check = mk(<path d="M20 6 9 17l-5-5"/>);
+const MessageCircle = mk(<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>);
+
+const STAGES = [
+  { id: "greeting", label: "Greeting" },
+  { id: "discovery", label: "Discovery" },
+  { id: "qualifying", label: "Qualifying" },
+  { id: "ready_for_handoff", label: "Ready" },
+];
+
+const EMPTY_LEAD = {
+  intent: null, propertyType: null, budget: null, locations: null, timeline: null,
+  financing: null, residency: null, firstTimer: null, name: null, contact: null, notes: null,
+};
+
+const LEAD_FIELDS = [
+  { key: "intent", label: "Intent", Icon: Target },
+  { key: "propertyType", label: "Property", Icon: Home },
+  { key: "budget", label: "Budget", Icon: Wallet },
+  { key: "locations", label: "Location", Icon: MapPin },
+  { key: "timeline", label: "Timeline", Icon: Clock },
+  { key: "financing", label: "Financing", Icon: Landmark },
+  { key: "residency", label: "Residency", Icon: BadgeCheck },
+  { key: "name", label: "Name", Icon: User },
+  { key: "contact", label: "Contact", Icon: Phone },
+];
+
+function systemPrompt(leadJSON, context) {
+  return `You are the AI sales & service assistant for ${AGENT.name}, a licensed property agent at ${AGENT.agency} in Singapore. You help prospective buyers, sellers, renters and investors with Singapore residential property. Your job: be genuinely useful while progressively qualifying the person as a lead for ${AGENT.name} to follow up.
+
+CONVERSATION STYLE
+- Warm, professional, concise. Keep each reply under ~110 words.
+- Acknowledge what they said, give one useful nugget, then ask ONE focused next question.
+
+SINGAPORE PROPERTY KNOWLEDGE (general framing only)
+- Explain in GENERAL terms: BSD & ABSD, LTV, TDSR (~55%) and MSR (~30% for HDB/EC), CPF usage, HDB eligibility (BTO/resale, MOP, income ceilings), EC eligibility, buy process (OTP → exercise → completion), sell process.
+- Rates and rules change. NEVER present figures as definitive personalised financial/legal/tax advice. Frame as general guidance, point to official sources (IRAS, HDB, CPF, MAS), recommend confirming with ${AGENT.name}. If unsure of a current number, say so.
+
+GUARDRAILS
+- Do NOT invent specific live listings, prices or availability unless they appear in RETRIEVED CONTEXT below. Otherwise say ${AGENT.name} will send current matching options and capture preferences.
+- No pressure tactics. Fair, honest dealing. Stay on Singapore property; politely redirect off-topic.
+
+GROUNDING
+- Retrieved context from ${AGENT.name}'s knowledge base is provided below. Prefer it for factual specifics (listings, project details, internal notes). If it answers the question, use it and append a short note: "(source: knowledge base)". If empty or irrelevant, use general knowledge with your usual caveats — never fabricate listings or prices.
+
+<retrieved_context>
+${context && context.trim() ? context : "(none retrieved for this message)"}
+</retrieved_context>
+
+QUALIFY (capture naturally, never interrogate): intent, propertyType, budget, locations, timeline, financing, residency (Singaporean/PR/Foreigner — affects ABSD), first-time buyer, then name + contact.
+
+HANDOFF
+- Once you have intent + property type + (budget OR timeline), invite them to leave their name and best contact (phone / email / WhatsApp) so ${AGENT.name} can follow up. Set stage "ready_for_handoff" only once a contact is captured.
+
+CURRENT KNOWN LEAD (merge new info; keep existing values unless corrected):
+${leadJSON}
+
+OUTPUT — CRITICAL
+Respond with ONE valid JSON object and NOTHING else. No markdown, no code fences, no text outside it. Schema:
+{
+  "reply": "<message; may use **bold** and lines starting with - for bullets>",
+  "lead": {"intent":"buy|sell|rent|invest|null","propertyType":"<string>|null","budget":"<string>|null","locations":"<string>|null","timeline":"<string>|null","financing":"<string>|null","residency":"Singaporean|PR|Foreigner|null","firstTimer":"yes|no|null","name":"<string>|null","contact":"<string>|null","notes":"<short useful context>|null"},
+  "stage": "greeting|discovery|qualifying|ready_for_handoff",
+  "quickReplies": ["<short reply from the PERSON's point of view>", "..."]
+}
+Use null for unknowns. Give 2–3 quickReplies.`;
+}
+
+function FormattedText({ text }) {
+  const lines = String(text).split("\n");
+  const out = []; let bullets = [];
+  const inline = (s) => String(s).split(/(\*\*[^*]+\*\*)/g).map((p, i) =>
+    p.startsWith("**") && p.endsWith("**")
+      ? <strong key={i} style={{ fontWeight: 700 }}>{p.slice(2, -2)}</strong>
+      : <span key={i}>{p}</span>);
+  const flush = (k) => {
+    if (bullets.length) {
+      out.push(<ul key={`u${k}`} style={{ margin: "6px 0 6px 2px", paddingLeft: 16 }}>
+        {bullets.map((b, i) => <li key={i} style={{ marginBottom: 3, listStyleType: "disc" }}>{inline(b)}</li>)}
+      </ul>); bullets = [];
+    }
+  };
+  lines.forEach((ln, idx) => {
+    const t = ln.trim();
+    if (t.startsWith("- ")) { bullets.push(t.slice(2)); return; }
+    flush(idx);
+    if (t === "") out.push(<div key={`b${idx}`} style={{ height: 6 }} />);
+    else out.push(<p key={`p${idx}`} style={{ margin: "0 0 4px" }}>{inline(t)}</p>);
+  });
+  flush("end");
+  return <div>{out}</div>;
+}
+
+function PropertyAgent() {
+  const greeting = `Hi! I'm ${AGENT.name}'s property concierge at ${AGENT.agency}. 👋\n\nI can help you **buy, sell, or rent** in Singapore — and answer questions on stamp duty, loans, HDB eligibility and the buying process.\n\nTo get started, what brings you in today?`;
+
+  const [messages, setMessages] = useState([{ role: "assistant", content: greeting }]);
+  const [lead, setLead] = useState(EMPTY_LEAD);
+  const [stage, setStage] = useState("greeting");
+  const [quickReplies, setQuickReplies] = useState(["I'm looking to buy", "I want to sell my place", "I'm just exploring"]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const endRef = useRef(null);
+
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, loading]);
+
+  const filledCount = LEAD_FIELDS.filter(f => lead[f.key]).length;
+  const pct = Math.round((filledCount / LEAD_FIELDS.length) * 100);
+  const stageIdx = Math.max(0, STAGES.findIndex(s => s.id === stage));
+  const ready = stage === "ready_for_handoff";
+
+  // ── Retrieval via worker (no creds in the browser) ──
+  async function retrieveContext(query) {
+    try {
+      const res = await fetch(`${WORKER_URL}/retrieve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query, collection: "propnex", top_k: 4 }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      const data = await res.json();
+      const chunks = data.chunks || [];
+      return chunks.map((c, i) => `[${i + 1}] (${c.source || "propnex"}) ${c.text}`).join("\n\n");
+    } catch (e) {
+      return "";
+    }
+  }
+
+  // ── Chat via worker ──
+  async function send(textRaw) {
+    const text = (textRaw ?? input).trim();
+    if (!text || loading) return;
+    setInput(""); setQuickReplies([]);
+    const newMsgs = [...messages, { role: "user", content: text }];
+    setMessages(newMsgs); setLoading(true);
+    try {
+      const context = await retrieveContext(text);
+      const res = await fetch(`${WORKER_URL}/chat`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6", max_tokens: 1000,
+          system: systemPrompt(JSON.stringify(lead), context),
+          messages: newMsgs.map(m => ({ role: m.role, content: m.content })),
+        }),
+      });
+      const data = await res.json();
+      let raw = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n").trim();
+      raw = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
+      const parsed = JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1));
+      setMessages(m => [...m, { role: "assistant", content: parsed.reply || "…" }]);
+      if (parsed.lead) setLead(prev => {
+        const merged = { ...prev };
+        for (const k of Object.keys(EMPTY_LEAD)) {
+          const v = parsed.lead[k];
+          if (v !== null && v !== undefined && String(v).trim() !== "") merged[k] = v;
+        }
+        return merged;
+      });
+      if (parsed.stage) setStage(parsed.stage);
+      setQuickReplies(Array.isArray(parsed.quickReplies) ? parsed.quickReplies.slice(0, 3) : []);
+    } catch {
+      setMessages(m => [...m, { role: "assistant", content: "Sorry — I had trouble responding just then. Mind sending that again?" }]);
+    } finally { setLoading(false); }
+  }
+
+  function reset() {
+    setMessages([{ role: "assistant", content: greeting }]);
+    setLead(EMPTY_LEAD); setStage("greeting");
+    setQuickReplies(["I'm looking to buy", "I want to sell my place", "I'm just exploring"]);
+    setInput("");
+  }
+
+  // ── WhatsApp handoff to Andrew (visitor sends their own enquiry) ──
+  function waLink(number, msg) { return `https://wa.me/${String(number).replace(/\D/g, "")}?text=${encodeURIComponent(msg)}`; }
+  function handoffMessage() {
+    const lines = [`Hi ${AGENT.name}, I was chatting with your property concierge and I'd like to follow up.`, ""];
+    const add = (label, v) => { if (v) lines.push(`${label}: ${v}`); };
+    add("Looking to", lead.intent);
+    add("Property", lead.propertyType);
+    add("Budget", lead.budget);
+    add("Location", lead.locations);
+    add("Timeline", lead.timeline);
+    add("Financing", lead.financing);
+    add("Residency", lead.residency);
+    add("First-time buyer", lead.firstTimer);
+    add("Name", lead.name);
+    add("Contact", lead.contact);
+    add("Notes", lead.notes);
+    return lines.join("\n");
+  }
+
+  const btn = (bg) => ({ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, border: "none", borderRadius: 12, padding: "12px 8px", fontSize: 13.5, fontWeight: 600, color: "#fff", background: bg, cursor: "pointer", textDecoration: "none" });
+
+  return (
+    <div style={{ fontFamily: "'Inter', system-ui, sans-serif", color: C.text, background: C.canvas, minHeight: "100%" }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap');
+        .pa-scroll::-webkit-scrollbar{width:8px}
+        .pa-scroll::-webkit-scrollbar-thumb{background:#cdd6df;border-radius:8px}
+        .pa-chip:hover{background:#fff;border-color:${C.brass}}
+        .pa-send:hover{filter:brightness(1.08)}
+        .pa-act:hover{filter:brightness(1.06)}
+        textarea:focus,input:focus,select:focus{outline:none;border-color:${C.brass}}
+        @keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+      `}</style>
+
+      <div className="pa-wrap" style={{ maxWidth: 1180, margin: "0 auto", padding: 16, display: "flex", flexDirection: "column", height: "100vh", boxSizing: "border-box" }}>
+
+        {/* Header */}
+        <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 42, height: 42, borderRadius: 12, background: C.ink, display: "grid", placeItems: "center", boxShadow: "0 6px 18px rgba(14,27,44,.25)" }}>
+              <Home size={20} color={C.brass} />
+            </div>
+            <div>
+              <div style={{ fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 600, lineHeight: 1, letterSpacing: "-0.01em" }}>
+                {AGENT.agency} <span style={{ color: C.brass }}>Concierge</span>
+              </div>
+              <div style={{ fontSize: 12, color: C.sub, marginTop: 3 }}>{AGENT.tagline}</div>
+            </div>
+          </div>
+          <button onClick={reset} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: C.sub, background: "#fff", border: `1px solid ${C.line}`, borderRadius: 10, padding: "8px 11px", cursor: "pointer" }}><RotateCcw size={14} /> Reset</button>
+        </header>
+
+        <div className="pa-main" style={{ display: "flex", gap: 16, flex: 1, minHeight: 0 }}>
+
+          {/* Chat */}
+          <section className="pa-chat" style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, background: C.card, border: `1px solid ${C.line}`, borderRadius: 18, overflow: "hidden", boxShadow: "0 12px 40px rgba(14,27,44,.06)" }}>
+            <div className="pa-scroll" style={{ flex: 1, overflowY: "auto", padding: 18 }}>
+              {messages.map((m, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start", marginBottom: 12 }}>
+                  <div style={{
+                    maxWidth: "78%", padding: "11px 14px", borderRadius: 14, fontSize: 14.5, lineHeight: 1.5,
+                    background: m.role === "user" ? C.ink : "#F4F2EC", color: m.role === "user" ? "#F7F5F1" : C.text,
+                    borderTopRightRadius: m.role === "user" ? 4 : 14, borderTopLeftRadius: m.role === "user" ? 14 : 4,
+                    border: m.role === "user" ? "none" : `1px solid ${C.line}`,
+                  }}><FormattedText text={m.content} /></div>
+                </div>
+              ))}
+              {loading && (
+                <div style={{ display: "flex", gap: 5, padding: "10px 14px", width: "fit-content", background: "#F4F2EC", borderRadius: 14, border: `1px solid ${C.line}` }}>
+                  {[0, 1, 2].map(d => <span key={d} style={{ width: 7, height: 7, borderRadius: 99, background: C.brass, animation: `blink 1.2s ${d * 0.2}s infinite` }} />)}
+                </div>
+              )}
+              <div ref={endRef} />
+            </div>
+
+            {quickReplies.length > 0 && !loading && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, padding: "0 18px 10px" }}>
+                {quickReplies.map((q, i) => (
+                  <button key={i} className="pa-chip" onClick={() => send(q)} style={{ fontSize: 13, padding: "7px 12px", borderRadius: 999, border: `1px solid ${C.line}`, background: "#FBFAF7", color: C.text, cursor: "pointer", transition: "all .15s" }}>{q}</button>
+                ))}
+              </div>
+            )}
+
+            <div style={{ borderTop: `1px solid ${C.line}`, padding: 12, display: "flex", gap: 8, alignItems: "flex-end" }}>
+              <textarea value={input} onChange={e => setInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+                placeholder="Ask about HDB eligibility, ABSD, the buying process… or tell me what you need" rows={1}
+                style={{ flex: 1, resize: "none", border: `1px solid ${C.line}`, borderRadius: 12, padding: "11px 14px", fontSize: 14.5, fontFamily: "inherit", color: C.text, maxHeight: 120, background: "#FBFAF7" }} />
+              <button className="pa-send" onClick={() => send()} disabled={loading || !input.trim()}
+                style={{ background: C.ink, border: "none", borderRadius: 12, width: 46, height: 46, display: "grid", placeItems: "center", cursor: loading || !input.trim() ? "default" : "pointer", opacity: loading || !input.trim() ? 0.5 : 1 }}>
+                <Send size={18} color={C.brass} />
+              </button>
+            </div>
+            <div style={{ fontSize: 11, color: C.sub, textAlign: "center", padding: "0 12px 10px" }}>
+              General information only — not financial, legal or tax advice. Confirm with official sources / your agent.
+            </div>
+          </section>
+
+          {/* Summary + handoff */}
+          <aside className="pa-aside pa-scroll" style={{ width: 330, flexShrink: 0, display: "flex", flexDirection: "column", gap: 12, overflowY: "auto" }}>
+            <div style={{ background: C.ink, color: "#F7F5F1", borderRadius: 18, padding: 16, boxShadow: "0 12px 40px rgba(14,27,44,.14)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+                <ClipboardList size={16} color={C.brass} />
+                <span style={{ fontFamily: "'Fraunces', serif", fontSize: 16, fontWeight: 600 }}>What I've noted</span>
+                <Sparkles size={13} color={C.brassSoft} style={{ marginLeft: "auto" }} />
+              </div>
+              <div style={{ display: "flex", gap: 4, marginBottom: 6 }}>
+                {STAGES.map((s, i) => <div key={s.id} style={{ flex: 1, height: 4, borderRadius: 99, background: i <= stageIdx ? C.brass : C.lineDark }} />)}
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, color: "#9FB1C4", marginBottom: 14 }}>
+                <span>{STAGES[stageIdx].label}</span><span>{pct}% complete</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                {LEAD_FIELDS.map(({ key, label, Icon }) => {
+                  const val = lead[key];
+                  return (
+                    <div key={key} style={{ display: "flex", alignItems: "center", gap: 10, padding: "7px 0", borderBottom: `1px solid ${C.lineDark}` }}>
+                      <div style={{ width: 26, height: 26, borderRadius: 8, background: val ? "rgba(192,144,74,.18)" : "rgba(255,255,255,.05)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                        <Icon size={14} color={val ? C.brass : "#5C6F82"} />
+                      </div>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: 10.5, color: "#8FA1B4", textTransform: "uppercase", letterSpacing: ".04em" }}>{label}</div>
+                        <div style={{ fontSize: 13, color: val ? "#F7F5F1" : "#56697C", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{val || "—"}</div>
+                      </div>
+                      {val && <Check size={14} color={C.brass} style={{ flexShrink: 0 }} />}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Handoff */}
+            <div style={{ borderRadius: 18, padding: 16, background: ready ? C.sageSoft : "#fff", border: `1px solid ${ready ? "#BFD8C7" : C.line}`, transition: "all .25s" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <BadgeCheck size={16} color={ready ? C.sage : C.sub} />
+                <span style={{ fontWeight: 600, fontSize: 14, color: ready ? C.sage : C.text }}>{ready ? "Ready when you are" : "Talk to Andrew"}</span>
+              </div>
+              <div style={{ fontSize: 12.5, color: C.sub, lineHeight: 1.5, marginBottom: 12 }}>
+                {ready
+                  ? "I've noted your details. Send them straight to Andrew on WhatsApp and he'll follow up personally."
+                  : `As we chat I'll note your needs here. Whenever you're ready, send them to ${AGENT.name} on WhatsApp.`}
+              </div>
+              <a className="pa-act" href={filledCount ? waLink(AGENT_WA, handoffMessage()) : undefined} target="_blank" rel="noreferrer"
+                onClick={e => { if (!filledCount) e.preventDefault(); }}
+                style={{ ...btn(C.whatsapp), width: "100%", opacity: filledCount ? 1 : 0.5, pointerEvents: filledCount ? "auto" : "none" }}>
+                <MessageCircle size={16} /> Send my enquiry to {AGENT.name}
+              </a>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<PropertyAgent />);
+</script>
+</body>
+</html>
