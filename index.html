@@ -200,6 +200,11 @@
   .consent{display:flex; gap:10px; align-items:flex-start; font-size:12.5px; color:var(--steel); margin:4px 0 18px}
   .consent input{width:auto; margin-top:3px}
   .form .btn-primary{width:100%; justify-content:center; padding:13px}
+  .send-row{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .send-row .btn{width:100%; justify-content:center; padding:13px}
+  .btn-email{background:var(--ink); color:#fff}
+  .btn-email:hover{transform:translateY(-1px)}
+  @media (max-width:420px){ .send-row{grid-template-columns:1fr} }
   .contact h2{font-size:clamp(26px,3.4vw,38px); font-weight:800}
   .contact .lead{color:#33415a; margin:16px 0 22px}
   .ways a{display:flex; gap:12px; align-items:center; text-decoration:none; padding:13px 0; border-top:1px solid var(--line); font-weight:600}
@@ -436,7 +441,10 @@
           <input id="f-consent" type="checkbox" required />
           <span>I agree to be contacted about my enquiry. (PDPA consent)</span>
         </label>
-        <button type="submit" class="btn btn-primary">Send via WhatsApp</button>
+        <div class="send-row">
+          <button type="button" id="send-wa" class="btn btn-primary">Send via WhatsApp</button>
+          <button type="button" id="send-email" class="btn btn-email">Send via Email</button>
+        </div>
       </form>
     </div>
   </div>
@@ -483,22 +491,40 @@
 
   // Lead form -> compose a WhatsApp message (no backend needed).
   // To use a form service or your own endpoint instead, replace the body of this handler.
-  document.getElementById('lead-form').addEventListener('submit', function(e){
-    e.preventDefault();
+  function collectEnquiry(){
     const name   = document.getElementById('f-name').value.trim();
     const phone  = document.getElementById('f-phone').value.trim();
     const intent = document.getElementById('f-intent').value;
     const msg    = document.getElementById('f-msg').value.trim();
     const consent= document.getElementById('f-consent').checked;
-    if(!name || !phone){ alert("Please add your name and mobile."); return; }
-    if(!consent){ alert("Please tick the consent box so I can reply to you."); return; }
-    const text =
+    if(!name || !phone){ alert("Please add your name and mobile."); return null; }
+    if(!consent){ alert("Please tick the consent box so I can reply to you."); return null; }
+    return { name:name, phone:phone, intent:intent, msg:msg };
+  }
+  var leadForm = document.getElementById('lead-form');
+  if (leadForm) leadForm.addEventListener('submit', function(e){ e.preventDefault(); });
+  var waBtn = document.getElementById('send-wa');
+  if (waBtn) waBtn.addEventListener('click', function(){
+    var d = collectEnquiry(); if(!d) return;
+    var text =
       "Hi Andrew, this is an enquiry from your website.%0A%0A" +
-      "Name: " + name + "%0A" +
-      "Mobile: " + phone + "%0A" +
-      "Looking to: " + intent +
-      (msg ? "%0AMessage: " + msg : "");
+      "Name: " + d.name + "%0A" +
+      "Mobile: " + d.phone + "%0A" +
+      "Looking to: " + d.intent +
+      (d.msg ? "%0AMessage: " + d.msg : "");
     window.open(waBase + "?text=" + text, "_blank");
+  });
+  var emailBtn = document.getElementById('send-email');
+  if (emailBtn) emailBtn.addEventListener('click', function(){
+    var d = collectEnquiry(); if(!d) return;
+    var subject = "Property enquiry - " + d.name;
+    var body =
+      "Hi Andrew, this is an enquiry from your website.\n\n" +
+      "Name: " + d.name + "\n" +
+      "Mobile: " + d.phone + "\n" +
+      "Looking to: " + d.intent +
+      (d.msg ? "\nMessage: " + d.msg : "");
+    window.location.href = "mailto:" + EMAIL + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
   });
 
   /* ====== Market Pulse: load + render the daily brief ====== */
