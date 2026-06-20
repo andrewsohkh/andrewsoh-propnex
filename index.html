@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Andrew Soh · Singapore Property · PropNex</title>
+<meta name="description" content="Andrew Soh, licensed real estate salesperson with PropNex Realty. Guidance for buying, selling, renting and investing in Singapore property." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800;900&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --ink:#15263F;        /* deep marine navy — primary dark / text */
+    --paper:#FCFCFA;      /* clean near-white page */
+    --accent:#E0353A;     /* action / PropNex-aligned red */
+    --steel:#5C6B7D;      /* secondary text */
+    --line:#DBDFD7;       /* hairlines / site-plan grid */
+    --panel:#EDF1F3;      /* soft tint panels */
+    --ink-soft:rgba(255,255,255,.66);
+    --ink-line:rgba(255,255,255,.16);
+    --maxw:1140px;
+    --r:14px;
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:"Inter",system-ui,sans-serif; font-size:17px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit}
+  img{max-width:100%; display:block}
+
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 24px}
+  .mono{font-family:"Space Mono",ui-monospace,monospace}
+  .eyebrow{
+    font-family:"Space Mono",monospace; font-size:12px; letter-spacing:.18em;
+    text-transform:uppercase; color:var(--steel);
+  }
+  h1,h2,h3{font-family:"Archivo",sans-serif; line-height:1.04; margin:0; letter-spacing:-.01em}
+
+  .fill{ /* visible placeholder so you don't forget to replace it */
+    border-bottom:1px dotted var(--accent); color:var(--accent);
+    font-style:normal;
+  }
+
+  /* ---------- Top bar ---------- */
+  header.bar{
+    position:sticky; top:0; z-index:50;
+    background:rgba(252,252,250,.86); backdrop-filter:saturate(140%) blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .bar-in{display:flex; align-items:center; gap:20px; padding:13px 24px; max-width:var(--maxw); margin:0 auto}
+  .brand{display:flex; align-items:baseline; gap:12px; min-width:0}
+  .brand .nm{font-family:"Archivo",sans-serif; font-weight:800; font-size:18px; letter-spacing:-.01em; white-space:nowrap}
+  .brand .reg{font-family:"Space Mono",monospace; font-size:11px; color:var(--steel); white-space:nowrap}
+  nav.links{margin-left:auto; display:flex; gap:26px; align-items:center}
+  nav.links a{font-size:14px; text-decoration:none; color:var(--ink); opacity:.8}
+  nav.links a:hover{opacity:1}
+  .btn{
+    font-family:"Inter",sans-serif; font-weight:600; font-size:14px;
+    padding:10px 18px; border-radius:999px; border:1px solid transparent;
+    text-decoration:none; cursor:pointer; display:inline-flex; align-items:center; gap:8px;
+    transition:transform .15s ease, background .15s ease, color .15s ease;
+  }
+  .btn-primary{background:var(--accent); color:#fff}
+  .btn-primary:hover{transform:translateY(-1px)}
+  .btn-ghost{background:transparent; color:var(--ink); border-color:var(--line)}
+  .btn-ghost:hover{border-color:var(--ink)}
+  .btn-light{background:#fff; color:var(--ink)}
+  .btn-light:hover{transform:translateY(-1px)}
+
+  @media (max-width:820px){ nav.links a:not(.btn){display:none} .brand .reg{display:none} }
+
+  /* ---------- Hero ---------- */
+  .hero{position:relative; overflow:hidden; border-bottom:1px solid var(--line)}
+  .hero:before{ /* faint site-plan grid */
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background-image:linear-gradient(var(--line) 1px,transparent 1px),
+                     linear-gradient(90deg,var(--line) 1px,transparent 1px);
+    background-size:46px 46px; opacity:.5;
+    mask-image:linear-gradient(180deg,#000 0%,transparent 78%);
+  }
+  .hero-in{position:relative; max-width:var(--maxw); margin:0 auto; padding:78px 24px 70px;
+    display:grid; grid-template-columns:1.45fr .85fr; gap:48px; align-items:center}
+  .hero h1{font-size:clamp(38px,6vw,68px); font-weight:900}
+  .hero h1 em{font-style:normal; color:var(--accent)}
+  .hero p.lead{font-size:19px; color:#33415a; max-width:46ch; margin:22px 0 0}
+  .hero .cta-row{display:flex; gap:12px; flex-wrap:wrap; margin-top:30px}
+  .hero .annot{margin-top:30px; display:flex; gap:10px; flex-wrap:wrap}
+  .chip{font-family:"Space Mono",monospace; font-size:11.5px; letter-spacing:.04em;
+    color:var(--steel); border:1px solid var(--line); border-radius:6px; padding:5px 9px; background:#fff}
+
+  /* portrait card */
+  .portrait{
+    aspect-ratio:4/5; border-radius:var(--r); border:1px solid var(--line);
+    background:
+      radial-gradient(120% 90% at 70% 10%, #1d3career 0, transparent 60%),
+      linear-gradient(160deg,#1b2e4d, #15263F);
+    background-color:var(--ink);
+    position:relative; overflow:hidden; display:flex; align-items:flex-end; padding:22px;
+    box-shadow:0 24px 50px -28px rgba(21,38,63,.5);
+  }
+  .portrait .mono-tag{position:absolute; top:16px; left:16px; color:var(--ink-soft); font-size:11px}
+  .portrait .mono-tag2{position:absolute; top:16px; right:16px; color:var(--ink-soft); font-size:11px}
+  .portrait .monogram{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:"Archivo",sans-serif; font-weight:900; font-size:118px; color:rgba(255,255,255,.07); letter-spacing:-.04em;
+  }
+  .portrait .who{position:relative; color:#fff}
+  .portrait .who .nm{font-family:"Archivo",sans-serif; font-weight:800; font-size:22px}
+  .portrait .who .role{color:var(--ink-soft); font-size:13.5px; margin-top:2px}
+
+  @media (max-width:880px){
+    .hero-in{grid-template-columns:1fr; gap:34px; padding:54px 24px 50px}
+    .portrait{max-width:340px}
+  }
+
+  /* ---------- Section scaffold ---------- */
+  section{padding:74px 0}
+  .sec-head{display:flex; align-items:baseline; gap:16px; margin-bottom:34px}
+  .sec-head .idx{font-family:"Space Mono",monospace; color:var(--accent); font-size:13px; padding-top:6px}
+  .sec-head h2{font-size:clamp(26px,3.4vw,38px); font-weight:800}
+  .sec-head .sub{color:var(--steel); font-size:15px; margin-left:auto; max-width:34ch; text-align:right}
+  @media (max-width:680px){ .sec-head{flex-wrap:wrap} .sec-head .sub{text-align:left; margin-left:0} }
+
+  /* ---------- Services grid ---------- */
+  .grid{display:grid; grid-template-columns:repeat(3,1fr); gap:0; border:1px solid var(--line); border-radius:var(--r); overflow:hidden; background:#fff}
+  .cell{padding:26px 24px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); position:relative}
+  .cell:nth-child(3n){border-right:none}
+  .cell .n{font-family:"Space Mono",monospace; font-size:12px; color:var(--steel)}
+  .cell h3{font-size:20px; font-weight:700; margin:10px 0 8px}
+  .cell p{font-size:14.5px; color:#46546b; margin:0}
+  .cell:hover{background:var(--panel)}
+  @media (max-width:820px){ .grid{grid-template-columns:repeat(2,1fr)} .cell:nth-child(3n){border-right:1px solid var(--line)} .cell:nth-child(2n){border-right:none} }
+  @media (max-width:520px){ .grid{grid-template-columns:1fr} .cell{border-right:none!important} }
+
+  /* ---------- Process ---------- */
+  .steps{display:grid; grid-template-columns:1fr 1fr; gap:0 56px}
+  .step{display:grid; grid-template-columns:auto 1fr; gap:18px; padding:22px 0; border-top:1px solid var(--line)}
+  .step .sn{font-family:"Space Mono",monospace; font-weight:700; color:var(--accent); font-size:14px; padding-top:2px}
+  .step h3{font-size:18px; font-weight:700; margin:0 0 4px}
+  .step p{margin:0; font-size:14.5px; color:#46546b}
+  @media (max-width:680px){ .steps{grid-template-columns:1fr; gap:0} }
+
+  /* ---------- Concierge panel ---------- */
+  .concierge{background:var(--ink); color:#fff; border-radius:var(--r); padding:48px; position:relative; overflow:hidden}
+  .concierge:before{content:""; position:absolute; inset:0;
+    background-image:linear-gradient(var(--ink-line) 1px,transparent 1px),linear-gradient(90deg,var(--ink-line) 1px,transparent 1px);
+    background-size:38px 38px; opacity:.5; mask-image:radial-gradient(80% 80% at 80% 20%,#000,transparent)}
+  .concierge .inner{position:relative; max-width:660px}
+  .concierge .eyebrow{color:rgba(255,255,255,.6)}
+  .concierge h2{font-size:clamp(26px,3.4vw,40px); font-weight:800; margin:14px 0 14px}
+  .concierge p{color:var(--ink-soft); font-size:16px; margin:0 0 26px}
+  .concierge .note{font-family:"Space Mono",monospace; font-size:11.5px; color:rgba(255,255,255,.5); margin-top:18px}
+  @media (max-width:680px){ .concierge{padding:34px 24px} }
+
+  /* ---------- About ---------- */
+  .about{display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:start}
+  .about p{color:#33415a; margin:0 0 16px}
+  .facts{border:1px solid var(--line); border-radius:var(--r); background:#fff}
+  .fact{display:flex; justify-content:space-between; gap:16px; padding:15px 20px; border-bottom:1px solid var(--line); font-size:14.5px}
+  .fact:last-child{border-bottom:none}
+  .fact .k{font-family:"Space Mono",monospace; color:var(--steel); font-size:12.5px}
+  .fact .v{font-weight:600; text-align:right}
+  @media (max-width:760px){ .about{grid-template-columns:1fr; gap:28px} }
+
+  /* ---------- Contact ---------- */
+  .contact{background:var(--panel); border-top:1px solid var(--line); border-bottom:1px solid var(--line)}
+  .contact-in{display:grid; grid-template-columns:.8fr 1fr; gap:48px; align-items:start}
+  .form{background:#fff; border:1px solid var(--line); border-radius:var(--r); padding:28px}
+  .field{margin-bottom:16px}
+  label{display:block; font-size:13px; font-weight:600; margin-bottom:6px}
+  input,select,textarea{
+    width:100%; font-family:inherit; font-size:15px; padding:11px 13px;
+    border:1px solid var(--line); border-radius:9px; background:#fff; color:var(--ink);
+  }
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent); outline-offset:1px; border-color:transparent}
+  textarea{resize:vertical; min-height:84px}
+  .consent{display:flex; gap:10px; align-items:flex-start; font-size:12.5px; color:var(--steel); margin:4px 0 18px}
+  .consent input{width:auto; margin-top:3px}
+  .form .btn-primary{width:100%; justify-content:center; padding:13px}
+  .contact h2{font-size:clamp(26px,3.4vw,38px); font-weight:800}
+  .contact .lead{color:#33415a; margin:16px 0 22px}
+  .ways a{display:flex; gap:12px; align-items:center; text-decoration:none; padding:13px 0; border-top:1px solid var(--line); font-weight:600}
+  .ways a .mono{color:var(--steel); font-weight:400; margin-left:auto; font-size:13px}
+  @media (max-width:760px){ .contact-in{grid-template-columns:1fr; gap:30px} }
+
+  /* ---------- Footer ---------- */
+  footer{background:var(--ink); color:#fff; padding:46px 0 40px}
+  footer .cols{display:flex; flex-wrap:wrap; gap:30px 60px; justify-content:space-between}
+  footer .nm{font-family:"Archivo",sans-serif; font-weight:800; font-size:18px}
+  footer .id{font-family:"Space Mono",monospace; font-size:12px; color:var(--ink-soft); line-height:1.9; margin-top:10px}
+  footer .disc{color:rgba(255,255,255,.5); font-size:12px; max-width:54ch; margin-top:10px; line-height:1.6}
+  footer .copy{color:rgba(255,255,255,.4); font-family:"Space Mono",monospace; font-size:11.5px; margin-top:30px}
+
+  @media (prefers-reduced-motion:reduce){ *{scroll-behavior:auto!important; transition:none!important} }
+</style>
+</head>
+<body>
+
+<!-- ===================== TOP BAR ===================== -->
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand">
+      <span class="nm">Andrew Soh</span>
+      <span class="reg">PropNex · CEA Reg. R025916D</span>
+    </div>
+    <nav class="links">
+      <a href="#services">Services</a>
+      <a href="#process">How I work</a>
+      <a href="#concierge">AI concierge</a>
+      <a href="#about">About</a>
+      <a class="btn btn-primary" href="#contact">Get in touch</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero" style="padding:0">
+  <div class="hero-in">
+    <div>
+      <div class="eyebrow">Licensed real estate salesperson · Singapore</div>
+      <h1>The numbers, the process, and a <em>straight answer.</em></h1>
+      <p class="lead">I'm Andrew Soh, a salesperson with PropNex Realty. I help Singapore buyers, sellers, landlords and investors move with confidence — from the first valuation through to keys, stamp duty and completion.</p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#contact">Message me on WhatsApp</a>
+        <a class="btn btn-ghost" href="#concierge">Ask my AI concierge</a>
+      </div>
+      <div class="annot">
+        <span class="chip">HDB · Resale · New launch</span>
+        <span class="chip">Private &amp; landed</span>
+        <span class="chip">Leasing</span>
+        <span class="chip">Foreign buyers</span>
+      </div>
+    </div>
+
+    <!-- Portrait: drop your photo as a background-image on .portrait, or keep the monogram -->
+    <div class="portrait" aria-label="Andrew Soh">
+      <span class="mono-tag mono">PROPNEX</span>
+      <span class="mono-tag2 mono">SG · D01–D28</span>
+      <span class="monogram">AS</span>
+      <div class="who">
+        <div class="nm">Andrew Soh</div>
+        <div class="role">Associate Division Director</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== SERVICES ===================== -->
+<section id="services">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="idx">01 / SCOPE</span>
+      <h2>What I help with</h2>
+      <span class="sub">Whatever stage you're at, the goal is the same: a decision you understand and feel good about.</span>
+    </div>
+    <div class="grid">
+      <div class="cell">
+        <div class="n">01</div>
+        <h3>Buying a home</h3>
+        <p>Resale condos, apartments and landed homes — matched to your brief, budget and timeline.</p>
+      </div>
+      <div class="cell">
+        <div class="n">02</div>
+        <h3>New launch &amp; EC</h3>
+        <p>Project selection, unit stacks and the booking process explained without the sales pressure.</p>
+      </div>
+      <div class="cell">
+        <div class="n">03</div>
+        <h3>HDB resale</h3>
+        <p>Eligibility, grants, MOP, valuation and the HDB resale portal — guided end to end.</p>
+      </div>
+      <div class="cell">
+        <div class="n">04</div>
+        <h3>Selling</h3>
+        <p>Pricing, staging, marketing and negotiation to get a fair result on a sensible timeline.</p>
+      </div>
+      <div class="cell">
+        <div class="n">05</div>
+        <h3>Renting</h3>
+        <p>For tenants and landlords — sourcing, tenancy terms, and a clean handover both ways.</p>
+      </div>
+      <div class="cell">
+        <div class="n">06</div>
+        <h3>Foreign buyers &amp; investors</h3>
+        <p>Eligibility, ABSD exposure and the practical steps for buying from overseas or as a PR.</p>
+      </div>
+      <div class="cell">
+        <div class="n">07</div>
+        <h3>Mortgage &amp; financing</h3>
+        <p>Buying or refinancing — I'll connect you with trusted mortgage specialists to compare home-loan packages across banks for a competitive rate. A quick, no-obligation review can flag if you're overpaying on your current loan. Any referral fee I receive is disclosed to you upfront.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PROCESS ===================== -->
+<section id="process" style="background:#fff; border-top:1px solid var(--line); border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="idx">02 / METHOD</span>
+      <h2>How I work</h2>
+      <span class="sub">A clear path, so you always know what happens next.</span>
+    </div>
+    <div class="steps">
+      <div class="step"><span class="sn">01</span><div><h3>Discovery consult</h3><p>Your goals, timeline and budget — and an honest view of what's realistic.</p></div></div>
+      <div class="step"><span class="sn">02</span><div><h3>Financing &amp; affordability</h3><p>Loan-in-principle, TDSR/MSR and your stamp duty mapped before you commit.</p></div></div>
+      <div class="step"><span class="sn">03</span><div><h3>Shortlist &amp; viewings</h3><p>A curated shortlist, not a flood of listings — arranged around your schedule.</p></div></div>
+      <div class="step"><span class="sn">04</span><div><h3>Offer &amp; negotiation</h3><p>Strategy, paperwork and a steady hand through the back-and-forth.</p></div></div>
+      <div class="step"><span class="sn">05</span><div><h3>Stamp duty, legal &amp; completion</h3><p>Coordinated with your lawyer and banker so nothing slips through the cracks.</p></div></div>
+      <div class="step"><span class="sn">06</span><div><h3>After handover</h3><p>Leasing, periodic reviews, and a plan for your next move when the time comes.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CONCIERGE ===================== -->
+<section id="concierge">
+  <div class="wrap">
+    <div class="concierge">
+      <div class="inner">
+        <div class="eyebrow">A head start before we even talk</div>
+        <h2>Ask my AI property concierge</h2>
+        <p>Stamp duty, eligibility, the buying or selling process, what a step means — ask in plain language and get a grounded answer drawn from current Singapore property rules, any time of day.</p>
+        <a class="btn btn-light" href="#" id="concierge-link">Open the concierge →</a>
+        <div class="note">// General guidance only. Exact figures and eligibility are confirmed for your specific case.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== ABOUT ===================== -->
+<section id="about" style="background:#fff; border-top:1px solid var(--line); border-bottom:1px solid var(--line)">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="idx">03 / WHO</span>
+      <h2>About Andrew</h2>
+    </div>
+    <div class="about">
+      <div>
+        <p>I've spent more than two decades in Singapore real estate, and today I'm a salesperson with PropNex Realty. My approach is consultative: understand the goal first, run the numbers honestly, and only then talk options. Most of my business comes from referrals, which tells me the straight-answer approach works.</p>
+        <p>I work in English and Mandarin, and I'm happy to walk first-time buyers through every step at their pace.</p>
+      </div>
+      <div class="facts" aria-label="Quick facts">
+        <div class="fact"><span class="k">AGENCY</span><span class="v">PropNex Realty</span></div>
+        <div class="fact"><span class="k">CEA REG NO</span><span class="v">R025916D</span></div>
+        <div class="fact"><span class="k">LANGUAGES</span><span class="v">English · Mandarin</span></div>
+        <div class="fact"><span class="k">FOCUS</span><span class="v">Buy · Sell · Rent · Invest</span></div>
+        <div class="fact"><span class="k">SERVING</span><span class="v">Singapore · D01–D28</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CONTACT ===================== -->
+<section id="contact" class="contact">
+  <div class="wrap">
+    <div class="contact-in">
+      <div>
+        <div class="eyebrow">04 / TALK</div>
+        <h2 style="margin-top:14px">Tell me what you're thinking</h2>
+        <p class="lead">No obligation — a short message is enough to get started. I'll reply personally.</p>
+        <div class="ways">
+          <a href="#" id="wa-direct">WhatsApp <span class="mono">+65 9672 9144</span></a>
+          <a href="#" id="email-direct">Email <span class="mono">andrewsohkh@gmail.com</span></a>
+        </div>
+      </div>
+
+      <form class="form" id="lead-form" novalidate>
+        <div class="field">
+          <label for="f-name">Your name</label>
+          <input id="f-name" name="name" type="text" autocomplete="name" required />
+        </div>
+        <div class="field">
+          <label for="f-phone">Mobile</label>
+          <input id="f-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" required />
+        </div>
+        <div class="field">
+          <label for="f-intent">I'm looking to</label>
+          <select id="f-intent" name="intent">
+            <option>Buy a home</option>
+            <option>Sell a property</option>
+            <option>Rent (tenant)</option>
+            <option>Rent out my property (landlord)</option>
+            <option>Invest</option>
+            <option>Not sure yet</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-msg">Message <span style="font-weight:400;color:var(--steel)">(optional)</span></label>
+          <textarea id="f-msg" name="message" placeholder="A line about your situation, timeline or budget."></textarea>
+        </div>
+        <label class="consent">
+          <input id="f-consent" type="checkbox" required />
+          <span>I agree to be contacted about my enquiry. (PDPA consent)</span>
+        </label>
+        <button type="submit" class="btn btn-primary">Send via WhatsApp</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FOOTER ===================== -->
+<footer>
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <div class="nm">Andrew Soh</div>
+        <div class="id">
+          CEA Reg. No. R025916D<br>
+          PropNex Realty Pte Ltd<br>
+          Agency Licence No. L3008022J
+        </div>
+      </div>
+      <div style="max-width:54ch">
+        <div class="eyebrow" style="color:rgba(255,255,255,.5)">Disclaimer</div>
+        <p class="disc">This website is for general information and does not constitute financial, tax or legal advice. Stamp duty, loan eligibility and grant figures are subject to prevailing regulations and are confirmed for your specific circumstances. All property transactions are handled in accordance with CEA requirements.</p>
+      </div>
+    </div>
+    <div class="copy">© <span id="yr"></span> Andrew Soh · PropNex Realty. All rights reserved.</div>
+  </div>
+</footer>
+
+<script>
+  /* ====== SET THIS ONCE ====== */
+  const WHATSAPP_NUMBER = "6596729144";          // your number, digits only, with country code (65 for SG)
+  const EMAIL           = "andrewsohkh@gmail.com";       // your email
+  const CONCIERGE_URL   = "#";                   // paste your PropertyAgent / concierge deployment URL here
+  /* =========================== */
+
+  document.getElementById('yr').textContent = new Date().getFullYear();
+
+  // Direct links
+  const waBase = "https://wa.me/" + WHATSAPP_NUMBER;
+  const waDirect = document.getElementById('wa-direct');
+  if (waDirect) waDirect.href = waBase + "?text=" + encodeURIComponent("Hi Andrew, I'd like to ask about a property.");
+  const emailDirect = document.getElementById('email-direct');
+  if (emailDirect) emailDirect.href = "mailto:" + EMAIL;
+  const concierge = document.getElementById('concierge-link');
+  if (concierge) concierge.href = CONCIERGE_URL;
+
+  // Lead form -> compose a WhatsApp message (no backend needed).
+  // To use a form service or your own endpoint instead, replace the body of this handler.
+  document.getElementById('lead-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    const name   = document.getElementById('f-name').value.trim();
+    const phone  = document.getElementById('f-phone').value.trim();
+    const intent = document.getElementById('f-intent').value;
+    const msg    = document.getElementById('f-msg').value.trim();
+    const consent= document.getElementById('f-consent').checked;
+    if(!name || !phone){ alert("Please add your name and mobile."); return; }
+    if(!consent){ alert("Please tick the consent box so I can reply to you."); return; }
+    const text =
+      "Hi Andrew, this is an enquiry from your website.%0A%0A" +
+      "Name: " + name + "%0A" +
+      "Mobile: " + phone + "%0A" +
+      "Looking to: " + intent +
+      (msg ? "%0AMessage: " + msg : "");
+    window.open(waBase + "?text=" + text, "_blank");
+  });
+</script>
+</body>
+</html>
