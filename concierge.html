@@ -626,6 +626,7 @@ QUALIFY (capture naturally, never interrogate): intent, propertyType, budget, lo
 
 HANDOFF
 - Once you have intent + property type + (budget OR timeline), invite them to leave their name and best contact (phone / email / WhatsApp) so ${AGENT.name} can follow up. Set stage "ready_for_handoff" only once a contact is captured.
+- WRAP UP after handoff: the moment a contact is captured, confirm warmly in ONE sentence that you have passed their details to ${AGENT.name} and that he will be in touch on that contact — then stop. Do NOT keep small-talk going, do NOT ask new questions, and once in the ready_for_handoff stage ALWAYS return an empty quickReplies array []. If they only say thanks or bye afterwards, give a brief one-line sign-off with [] quickReplies.
 
 CURRENT KNOWN LEAD (merge new info; keep existing values unless corrected):
 ${leadJSON}
@@ -705,6 +706,7 @@ function PropertyAgent() {
   const [quickReplies, setQuickReplies] = useState(["I'm looking to buy", "I want to sell my place", "I'm just exploring"]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
   const endRef = useRef(null);
   useEffect(() => {
     endRef.current?.scrollIntoView({
@@ -730,7 +732,7 @@ function PropertyAgent() {
             lead,
             summary: handoffMessage()
           })
-        }).catch(() => {});
+        }).then(() => setSent(true)).catch(() => {});
       } catch (e) {}
     }
   }, [stage, lead.contact]);
@@ -1041,7 +1043,7 @@ function PropertyAgent() {
     }
   }))), /*#__PURE__*/React.createElement("div", {
     ref: endRef
-  })), quickReplies.length > 0 && !loading && /*#__PURE__*/React.createElement("div", {
+  })), quickReplies.length > 0 && !loading && !ready && /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexWrap: "wrap",
@@ -1272,7 +1274,20 @@ function PropertyAgent() {
       lineHeight: 1.5,
       marginBottom: 12
     }
-  }, ready ? "I've noted your details. Send them to Andrew by WhatsApp or email and he'll follow up personally." : `As we chat I'll note your needs here. Whenever you're ready, send them to ${AGENT.name} by WhatsApp or email.`), /*#__PURE__*/React.createElement("div", {
+  }, ready ? "I've noted your details. Send them to Andrew by WhatsApp or email and he'll follow up personally." : `As we chat I'll note your needs here. Whenever you're ready, send them to ${AGENT.name} by WhatsApp or email.`), sent && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 6,
+      fontSize: 12,
+      color: C.sage,
+      fontWeight: 600,
+      marginBottom: 10
+    }
+  }, /*#__PURE__*/React.createElement(BadgeCheck, {
+    size: 14,
+    color: C.sage
+  }), " Your details are on the way to ", AGENT.name, "."), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
