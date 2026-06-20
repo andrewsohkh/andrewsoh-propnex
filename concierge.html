@@ -563,6 +563,43 @@ const LEAD_FIELDS = [{
   label: "Contact",
   Icon: Phone
 }];
+function looseParse(s) {
+  try {
+    return JSON.parse(s);
+  } catch (_) {}
+  // Repair the common failure: raw line breaks/tabs inside string values.
+  let out = "",
+    inStr = false,
+    esc = false;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (esc) {
+      out += ch;
+      esc = false;
+      continue;
+    }
+    if (ch === "\\") {
+      out += ch;
+      esc = true;
+      continue;
+    }
+    if (ch === '"') {
+      inStr = !inStr;
+      out += ch;
+      continue;
+    }
+    if (inStr && (ch === "\n" || ch === "\r" || ch === "\t")) {
+      out += ch === "\n" ? "\\n" : ch === "\r" ? "\\r" : "\\t";
+      continue;
+    }
+    out += ch;
+  }
+  try {
+    return JSON.parse(out);
+  } catch (_) {
+    return null;
+  }
+}
 function systemPrompt(leadJSON, context) {
   return `You are the AI sales & service assistant for ${AGENT.name}, a licensed property agent at ${AGENT.agency} in Singapore. You help prospective buyers, sellers, renters and investors with Singapore residential property. Your job: be genuinely useful while progressively qualifying the person as a lead for ${AGENT.name} to follow up.
 
@@ -594,7 +631,7 @@ CURRENT KNOWN LEAD (merge new info; keep existing values unless corrected):
 ${leadJSON}
 
 OUTPUT — CRITICAL
-Respond with ONE valid JSON object and NOTHING else. No markdown, no code fences, no text outside it. Schema:
+Respond with ONE valid JSON object and NOTHING else — output it on a single line. No markdown, no code fences, no text outside it. Any newline inside a string value MUST be an escaped newline so the JSON stays valid; never put a raw line break inside the JSON. Schema:
 {
   "reply": "<message; may use **bold** and lines starting with - for bullets>",
   "lead": {"intent":"buy|sell|rent|invest|null","propertyType":"<string>|null","budget":"<string>|null","locations":"<string>|null","timeline":"<string>|null","financing":"<string>|null","residency":"Singaporean|PR|Foreigner|null","firstTimer":"yes|no|null","name":"<string>|null","contact":"<string>|null","notes":"<short useful context>|null"},
@@ -757,7 +794,18 @@ function PropertyAgent() {
       const data = await res.json();
       let raw = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n").trim();
       raw = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
-      const parsed = JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1));
+      const _a = raw.indexOf("{"),
+        _z = raw.lastIndexOf("}");
+      const parsed = _a !== -1 && _z > _a ? looseParse(raw.slice(_a, _z + 1)) : null;
+      if (!parsed) {
+        const prose = raw && raw[0] !== "{" ? raw : "Sorry — could you say that another way?";
+        setMessages(m => [...m, {
+          role: "assistant",
+          content: prose
+        }]);
+        setQuickReplies([]);
+        return;
+      }
       setMessages(m => [...m, {
         role: "assistant",
         content: parsed.reply || "…"
