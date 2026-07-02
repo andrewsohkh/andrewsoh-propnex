@@ -335,6 +335,7 @@ const AGENT_WA = "6596729144"; // Andrew's WhatsApp (country code + number)
 const AGENT_EMAIL = "andrewsohkh@gmail.com";
 const LEAD_WEBHOOK = "https://script.google.com/macros/s/AKfycbyyuOdtXazYqTyXfMLlTIcst0ca02JgLwYtDv6k_S6Nt3WOtf45hmav8UvAyunXol8WhQ/exec";
 const LEAD_TOKEN = "pnx-lead-7f3a";
+const LISTINGS_URL = "https://script.google.com/macros/s/AKfycbxjXbxHrF_V4XyjY-U15ckj6NlipOfdXCkHka78RTsvUBFCjimcRexAVVdagwZKRjbZ/exec"; // live listings backend (same Sheet as admin-listings.html)
 const AGENT = {
   name: "Andrew",
   agency: "PropNex",
@@ -600,7 +601,7 @@ function looseParse(s) {
     return null;
   }
 }
-function systemPrompt(leadJSON, context) {
+function systemPrompt(leadJSON, context, listingsText) {
   return `You are the AI sales & service assistant for ${AGENT.name}, a licensed property agent at ${AGENT.agency} in Singapore. You help prospective buyers, sellers, renters and investors with Singapore residential property. Your job: be genuinely useful while progressively qualifying the person as a lead for ${AGENT.name} to follow up.
 
 CONVERSATION STYLE
@@ -612,7 +613,7 @@ SINGAPORE PROPERTY KNOWLEDGE (general framing only)
 - Rates and rules change. NEVER present figures as definitive personalised financial/legal/tax advice. Frame as general guidance, point to official sources (IRAS, HDB, CPF, MAS), recommend confirming with ${AGENT.name}. If unsure of a current number, say so.
 
 GUARDRAILS
-- Do NOT invent specific live listings, prices or availability unless they appear in RETRIEVED CONTEXT below. Otherwise say ${AGENT.name} will send current matching options and capture preferences.
+- Do NOT invent specific live listings, prices or availability unless they appear in RETRIEVED CONTEXT or ANDREW'S LIVE LISTINGS below. Otherwise say ${AGENT.name} will send current matching options and capture preferences.
 - No pressure tactics. Fair, honest dealing. Stay on Singapore property; politely redirect off-topic.
 
 GROUNDING
@@ -621,6 +622,11 @@ GROUNDING
 <retrieved_context>
 ${context && context.trim() ? context : "(none retrieved for this message)"}
 </retrieved_context>
+
+ANDREW'S LIVE LISTINGS (authoritative — currently marketed by ${AGENT.name}; discuss these freely and proactively when relevant):
+${listingsText}
+- Only state facts given above for these listings. For anything not stated (exact floor, renovation, negotiability etc.), say you'll check with ${AGENT.name} and offer to arrange a viewing.
+- When a listing matches the person's needs, mention it naturally and suggest a viewing.
 
 QUALIFY (capture naturally, never interrogate): intent, propertyType, budget, locations, timeline, financing, residency (Singaporean/PR/Foreigner — affects ABSD), first-time buyer, then name + contact.
 
@@ -695,6 +701,18 @@ function FormattedText({
   flush("end");
   return /*#__PURE__*/React.createElement("div", null, out);
 }
+// ───────────── Live listings (from Andrew's Google Sheet backend) ─────────────
+function listingsBlock(listings, focus) {
+  if (!listings || !listings.length) return "(none live right now — do not invent any; say Andrew will send current matching options)";
+  const rows = listings.map(l => `• [${l.id}] ${l.title}${l.price ? " — " + l.price : ""}. ${l.facts_for_ai || ""}`);
+  let s = rows.join("\n");
+  if (focus) s = `THE VISITOR ARRIVED FROM THE LISTING CARD FOR: [${focus.id}] ${focus.title} — anchor the conversation on this unit first.\n` + s;
+  return s;
+}
+function focusGreeting(l) {
+  const hl = (l.highlights || []).slice(0, 3).map(h => "- " + h).join("\n");
+  return `Hi! I'm ${AGENT.name}'s property concierge at ${AGENT.agency}. 👋\n\nYou're asking about **${l.title}**${l.price ? ` — ${l.price}` : ""} — yes, it's currently available!\n\n${hl ? hl + "\n\n" : ""}Would you like to arrange a viewing, or is there anything else you'd like to know about it?`;
+}
 function PropertyAgent() {
   const greeting = `Hi! I'm ${AGENT.name}'s property concierge at ${AGENT.agency}. 👋\n\nI can help you **buy, sell, or rent** in Singapore — and answer questions on stamp duty, loans, HDB eligibility and the buying process.\n\nTo get started, what brings you in today?`;
   const [messages, setMessages] = useState([{
@@ -707,6 +725,25 @@ function PropertyAgent() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [listings, setListings] = useState([]);
+  const [focusListing, setFocusListing] = useState(null);
+  useEffect(() => {
+    fetch(LISTINGS_URL + "?ts=" + Date.now())
+      .then(r => r.json())
+      .then(d => {
+        const avail = ((d && d.listings) || []).filter(l => l.status !== "sold");
+        setListings(avail);
+        let id = null;
+        try { id = new URLSearchParams(window.location.search).get("listing"); } catch (e) {}
+        const hit = id ? avail.find(l => String(l.id) === String(id)) : null;
+        if (hit) {
+          setFocusListing(hit);
+          setMessages([{ role: "assistant", content: focusGreeting(hit) }]);
+          setQuickReplies(["Can I arrange a viewing?", "Tell me more about this unit", "What's nearby?"]);
+        }
+      })
+      .catch(() => {});
+  }, []);
   const endRef = useRef(null);
   useEffect(() => {
     endRef.current?.scrollIntoView({
@@ -786,7 +823,7 @@ function PropertyAgent() {
         body: JSON.stringify({
           model: "claude-sonnet-4-6",
           max_tokens: 1000,
-          system: systemPrompt(JSON.stringify(lead), context),
+          system: systemPrompt(JSON.stringify(lead), context, listingsBlock(listings, focusListing)),
           messages: newMsgs.map(m => ({
             role: m.role,
             content: m.content
