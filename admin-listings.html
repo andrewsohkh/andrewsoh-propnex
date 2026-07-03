@@ -6,38 +6,45 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Listings Manager · Andrew Soh</title>
 <style>
-  :root {
-    --ink: #1a2332; --line: #dde3ea; --bg: #f4f6f8; --card: #ffffff;
-    --accent: #b91c1c; --ok: #15803d; --muted: #6b7280;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--ink); padding: 16px; max-width: 720px; margin: 0 auto; }
-  h1 { font-size: 20px; margin-bottom: 2px; }
-  .sub { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
-  label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin: 10px 0 4px; }
-  input, textarea, select { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 8px; font-size: 15px; font-family: inherit; background: #fff; }
-  textarea { resize: vertical; }
-  .row { display: flex; gap: 10px; }
-  .row > div { flex: 1; }
-  button { padding: 10px 16px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
-  .btn-primary { background: var(--accent); color: #fff; width: 100%; margin-top: 14px; }
-  .btn-small { font-size: 12px; padding: 6px 10px; }
-  .btn-ghost { background: #eef1f4; color: var(--ink); }
-  .btn-danger { background: #fee2e2; color: var(--accent); }
-  .btn-ok { background: #dcfce7; color: var(--ok); }
-  .listing { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); }
-  .listing:last-child { border-bottom: none; }
-  .l-title { font-weight: 600; font-size: 14px; }
-  .l-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 6px; vertical-align: middle; }
-  .badge.available { background: #dcfce7; color: var(--ok); }
-  .badge.sold { background: #fee2e2; color: var(--accent); }
-  .actions { display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
-  #msg { font-size: 13px; margin-top: 10px; min-height: 18px; }
-  #msg.ok { color: var(--ok); } #msg.err { color: var(--accent); }
-  .hidden { display: none; }
-  .hint { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  :root{--ink:#1a2332;--line:#dde3ea;--bg:#f4f6f8;--card:#fff;--accent:#b91c1c;--ok:#15803d;--muted:#6b7280}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);padding:16px;max-width:720px;margin:0 auto}
+  h1{font-size:20px;margin-bottom:2px}
+  .sub{color:var(--muted);font-size:13px;margin-bottom:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+  label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin:10px 0 4px}
+  input,textarea,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-size:15px;font-family:inherit;background:#fff}
+  textarea{resize:vertical}
+  .row{display:flex;gap:10px}.row>div{flex:1}
+  button{padding:10px 16px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer}
+  .btn-primary{background:var(--accent);color:#fff;width:100%;margin-top:14px}
+  .btn-small{font-size:12px;padding:6px 10px}
+  .btn-ghost{background:#eef1f4;color:var(--ink)}
+  .btn-danger{background:#fee2e2;color:var(--accent)}
+  .btn-ok{background:#dcfce7;color:var(--ok)}
+  .listing{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .listing:last-child{border-bottom:none}
+  .listing-left{display:flex;gap:10px;align-items:flex-start;min-width:0}
+  .listing-thumb{width:52px;height:52px;border-radius:8px;object-fit:cover;flex-shrink:0;background:#eef1f4}
+  .l-title{font-weight:600;font-size:14px}
+  .l-meta{font-size:12px;color:var(--muted);margin-top:2px}
+  .badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px;margin-left:6px;vertical-align:middle}
+  .badge.available{background:#dcfce7;color:var(--ok)}.badge.sold{background:#fee2e2;color:var(--accent)}
+  .actions{display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0}
+  #msg{font-size:13px;margin-top:10px;min-height:18px}#msg.ok{color:var(--ok)}#msg.err{color:var(--accent)}
+  .hidden{display:none}
+  .hint{font-size:11px;color:var(--muted);margin-top:3px}
+  /* photo gallery */
+  .photos{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .thumb{position:relative;width:84px;height:84px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:#eef1f4}
+  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .thumb .cover-tag{position:absolute;bottom:0;left:0;right:0;background:var(--accent);color:#fff;font-size:9px;font-weight:700;text-align:center;padding:1px 0}
+  .thumb .x{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .thumb .mv{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,.45);color:#fff;border:none;font-size:12px;cursor:pointer;display:none;align-items:center;justify-content:center}
+  .thumb:not(:first-child) .mv{display:flex}
+  .addphoto{width:84px;height:84px;border-radius:8px;border:2px dashed var(--line);background:#fafbfc;color:var(--muted);font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;text-align:center}
+  .addphoto span{font-size:22px;line-height:1}
+  .uploading{font-size:12px;color:var(--accent);margin-top:6px}
 </style>
 </head>
 <body>
@@ -45,65 +52,47 @@
 <h1>🏠 Listings Manager</h1>
 <p class="sub">Add, edit, or mark listings sold — changes go live on your site immediately.</p>
 
-<!-- STEP 0: connect -->
 <div class="card" id="loginCard">
   <label>Admin password</label>
   <input type="password" id="secret" placeholder="Enter your admin password">
   <button class="btn-primary" onclick="connect()">Unlock</button>
-  <div id="loginMsg" style="font-size:13px; color:var(--accent); margin-top:8px;"></div>
+  <div id="loginMsg" style="font-size:13px;color:var(--accent);margin-top:8px;"></div>
 </div>
 
-<!-- Current listings -->
 <div class="card hidden" id="listCard">
-  <div style="display:flex; justify-content:space-between; align-items:center;">
+  <div style="display:flex;justify-content:space-between;align-items:center;">
     <strong style="font-size:14px;">Current listings</strong>
     <button class="btn-small btn-ghost" onclick="newListing()">＋ Add new</button>
   </div>
   <div id="listings" style="margin-top:8px;"></div>
 </div>
 
-<!-- Add / edit form -->
 <div class="card hidden" id="formCard">
   <strong style="font-size:14px;" id="formTitle">Add listing</strong>
   <input type="hidden" id="f_id">
 
   <label>Listing title *</label>
-  <input id="f_title" placeholder="4-Room HDB · Jalan Bahagia">
+  <input id="f_title" placeholder="Common Room · Foresque Residences">
 
   <div class="row">
-    <div>
-      <label>Asking price</label>
-      <input id="f_price" placeholder="S$720,000">
-    </div>
-    <div>
-      <label>Size</label>
-      <input id="f_size" placeholder="93 sqm">
-    </div>
+    <div><label>Asking price</label><input id="f_price" placeholder="S$1,500/mo"></div>
+    <div><label>Size</label><input id="f_size" placeholder="150 sq ft"></div>
   </div>
-
   <div class="row">
-    <div>
-      <label>Floor</label>
-      <input id="f_floor" placeholder="High floor">
-    </div>
-    <div>
-      <label>Status</label>
-      <select id="f_status">
-        <option value="available">Available</option>
-        <option value="sold">Sold</option>
-      </select>
-    </div>
+    <div><label>Floor</label><input id="f_floor" placeholder="Low floor"></div>
+    <div><label>Status</label><select id="f_status"><option value="available">Available</option><option value="sold">Sold</option></select></div>
   </div>
 
   <label>Highlights (one per line)</label>
-  <textarea id="f_highlights" rows="3" placeholder="Unblocked view&#10;5 min to Boon Keng MRT&#10;Move-in condition"></textarea>
+  <textarea id="f_highlights" rows="3" placeholder="Unblocked view&#10;5 min to Cashew MRT&#10;Move-in condition"></textarea>
 
-  <label>Photo URL</label>
-  <input id="f_photo" placeholder="images/whampoa-4rm.jpg">
-  <div class="hint">Upload the photo to your site's images folder first, then put its path or full URL here.</div>
+  <label>Photos <span style="font-weight:400;color:var(--muted)">— first photo is the cover; drag order with ← arrows</span></label>
+  <div class="photos" id="photoBox"></div>
+  <input type="file" id="fileInput" accept="image/*" multiple style="display:none">
+  <div class="uploading hidden" id="uploadStatus"></div>
 
   <label>Facts for the AI concierge</label>
-  <textarea id="f_facts" rows="4" placeholder="Everything the concierge is allowed to tell buyers about this unit: block, size, floor, view, price, built year, viewing arrangements…"></textarea>
+  <textarea id="f_facts" rows="4" placeholder="Everything the concierge may tell buyers: block, size, floor, view, price, built year, MRT distance, viewing arrangements…"></textarea>
   <div class="hint">The concierge answers ONLY from this text — anything missing, it says "let me check with Andrew".</div>
 
   <button class="btn-primary" onclick="saveListing()">Save listing</button>
@@ -111,135 +100,166 @@
 </div>
 
 <script>
-// =============================================================
-// PASTE YOUR APPS SCRIPT WEB APP URL HERE:
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxjXbxHrF_V4XyjY-U15ckj6NlipOfdXCkHka78RTsvUBFCjimcRexAVVdagwZKRjbZ/exec";
-// =============================================================
+// ============ PASTE YOUR APPS SCRIPT WEB APP URL HERE ============
+const SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+// ================================================================
 
 let SECRET = "";
 let LISTINGS = [];
+let photos = [];   // working list of photo URLs for the listing being edited
 
-function slugify(t) {
-  return t.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 40);
-}
+function slugify(t){return t.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"").slice(0,40)}
+function esc(s){const d=document.createElement("div");d.textContent=s||"";return d.innerHTML}
 
-async function connect() {
-  SECRET = document.getElementById("secret").value.trim();
-  if (!SECRET) { document.getElementById("loginMsg").textContent = "Please enter the password."; return; }
-  document.getElementById("loginMsg").textContent = "Loading…";
-  try {
-    const res = await fetch(SCRIPT_URL);
-    const data = await res.json();
-    LISTINGS = data.listings || [];
+async function connect(){
+  SECRET=document.getElementById("secret").value.trim();
+  if(!SECRET){document.getElementById("loginMsg").textContent="Please enter the password.";return}
+  document.getElementById("loginMsg").textContent="Loading…";
+  try{
+    const res=await fetch(SCRIPT_URL);const data=await res.json();
+    LISTINGS=data.listings||[];
     document.getElementById("loginCard").classList.add("hidden");
     document.getElementById("listCard").classList.remove("hidden");
     render();
-  } catch (e) {
-    document.getElementById("loginMsg").textContent = "Could not reach the server. Check the SCRIPT_URL.";
-  }
+  }catch(e){document.getElementById("loginMsg").textContent="Could not reach the server. Check the SCRIPT_URL."}
 }
 
-function render() {
-  const box = document.getElementById("listings");
-  if (!LISTINGS.length) {
-    box.innerHTML = '<p style="font-size:13px;color:var(--muted);padding:10px 0;">No listings yet — tap "Add new" to create your first one.</p>';
-    return;
-  }
-  box.innerHTML = LISTINGS.map(L => `
-    <div class="listing">
-      <div>
+function render(){
+  const box=document.getElementById("listings");
+  if(!LISTINGS.length){box.innerHTML='<p style="font-size:13px;color:var(--muted);padding:10px 0;">No listings yet — tap "Add new".</p>';return}
+  box.innerHTML=LISTINGS.map(L=>{
+    const cover=(L.photos&&L.photos[0])||L.photo||"";
+    const thumb=cover?`<img class="listing-thumb" src="${esc(cover)}" alt="">`:`<div class="listing-thumb"></div>`;
+    const count=(L.photos&&L.photos.length)?` · ${L.photos.length} photo${L.photos.length>1?"s":""}`:"";
+    return `<div class="listing">
+      <div class="listing-left">${thumb}<div>
         <div class="l-title">${esc(L.title)}<span class="badge ${L.status}">${L.status.toUpperCase()}</span></div>
-        <div class="l-meta">${esc(L.price)} · ${esc(L.size)} · ${esc(L.floor)}</div>
-      </div>
+        <div class="l-meta">${esc(L.price)} · ${esc(L.size)}${count}</div>
+      </div></div>
       <div class="actions">
         <button class="btn-small btn-ghost" onclick="editListing('${L.id}')">Edit</button>
-        ${L.status === "available"
-          ? `<button class="btn-small btn-danger" onclick="setStatus('${L.id}','sold')">Mark sold</button>`
-          : `<button class="btn-small btn-ok" onclick="setStatus('${L.id}','available')">Relist</button>`}
+        ${L.status==="available"
+          ?`<button class="btn-small btn-danger" onclick="setStatus('${L.id}','sold')">Mark sold</button>`
+          :`<button class="btn-small btn-ok" onclick="setStatus('${L.id}','available')">Relist</button>`}
         <button class="btn-small btn-danger" onclick="removeListing('${L.id}')">Delete</button>
-      </div>
-    </div>`).join("");
+      </div></div>`;
+  }).join("");
 }
 
-function esc(s) { const d = document.createElement("div"); d.textContent = s || ""; return d.innerHTML; }
+function renderPhotos(){
+  const box=document.getElementById("photoBox");
+  const tiles=photos.map((url,i)=>`
+    <div class="thumb">
+      <img src="${esc(url)}" alt="">
+      ${i===0?'<div class="cover-tag">COVER</div>':''}
+      <button class="mv" onclick="movePhoto(${i})" title="Make cover">←</button>
+      <button class="x" onclick="delPhoto(${i})" title="Remove">×</button>
+    </div>`).join("");
+  box.innerHTML=tiles+`<div class="addphoto" onclick="document.getElementById('fileInput').click()"><span>＋</span>Add photo</div>`;
+}
+function movePhoto(i){ if(i<=0)return; const p=photos.splice(i,1)[0]; photos.unshift(p); renderPhotos(); }
+function delPhoto(i){ photos.splice(i,1); renderPhotos(); }
 
-function newListing() {
-  ["f_id","f_title","f_price","f_size","f_floor","f_highlights","f_photo","f_facts"].forEach(id => document.getElementById(id).value = "");
-  document.getElementById("f_status").value = "available";
-  document.getElementById("formTitle").textContent = "Add listing";
+// Resize on the phone BEFORE upload → smaller, faster, avoids big-payload errors.
+function resizeImage(file,maxW){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();const rd=new FileReader();
+    rd.onload=()=>{img.src=rd.result};
+    rd.onerror=reject;
+    img.onload=()=>{
+      let{width,height}=img;
+      if(width>maxW){height=Math.round(height*maxW/width);width=maxW}
+      const cv=document.createElement("canvas");cv.width=width;cv.height=height;
+      cv.getContext("2d").drawImage(img,0,0,width,height);
+      resolve(cv.toDataURL("image/jpeg",0.82));
+    };
+    img.onerror=reject;
+    rd.readAsDataURL(file);
+  });
+}
+
+document.getElementById("fileInput").addEventListener("change",async function(ev){
+  const files=[...ev.target.files]; ev.target.value="";
+  if(!files.length)return;
+  const status=document.getElementById("uploadStatus");
+  status.classList.remove("hidden");
+  for(let k=0;k<files.length;k++){
+    status.textContent=`Uploading photo ${k+1} of ${files.length}…`;
+    try{
+      const dataUrl=await resizeImage(files[k],1600);
+      const res=await fetch(SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
+        body:JSON.stringify({secret:SECRET,action:"uploadPhoto",dataUrl,name:files[k].name})});
+      const data=await res.json();
+      if(data.ok&&data.url){photos.push(data.url);renderPhotos()}
+      else status.textContent="Upload failed: "+(data.error||"unknown");
+    }catch(e){status.textContent="Upload failed: "+e.message}
+  }
+  status.textContent="Done ✓"; setTimeout(()=>status.classList.add("hidden"),1200);
+});
+
+function newListing(){
+  ["f_id","f_title","f_price","f_size","f_floor","f_highlights","f_facts"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("f_status").value="available";
+  photos=[]; renderPhotos();
+  document.getElementById("formTitle").textContent="Add listing";
   document.getElementById("formCard").classList.remove("hidden");
   document.getElementById("f_title").focus();
 }
-
-function editListing(id) {
-  const L = LISTINGS.find(x => x.id === id);
-  if (!L) return;
-  document.getElementById("f_id").value = L.id;
-  document.getElementById("f_title").value = L.title;
-  document.getElementById("f_price").value = L.price;
-  document.getElementById("f_size").value = L.size;
-  document.getElementById("f_floor").value = L.floor;
-  document.getElementById("f_status").value = L.status;
-  document.getElementById("f_highlights").value = (L.highlights || []).join("\n");
-  document.getElementById("f_photo").value = L.photo;
-  document.getElementById("f_facts").value = L.facts_for_ai;
-  document.getElementById("formTitle").textContent = "Edit listing";
+function editListing(id){
+  const L=LISTINGS.find(x=>x.id===id);if(!L)return;
+  document.getElementById("f_id").value=L.id;
+  document.getElementById("f_title").value=L.title;
+  document.getElementById("f_price").value=L.price;
+  document.getElementById("f_size").value=L.size;
+  document.getElementById("f_floor").value=L.floor;
+  document.getElementById("f_status").value=L.status;
+  document.getElementById("f_highlights").value=(L.highlights||[]).join("\n");
+  document.getElementById("f_facts").value=L.facts_for_ai;
+  photos=(L.photos&&L.photos.length)?L.photos.slice():(L.photo?[L.photo]:[]);
+  renderPhotos();
+  document.getElementById("formTitle").textContent="Edit listing";
   document.getElementById("formCard").classList.remove("hidden");
-  window.scrollTo({ top: document.getElementById("formCard").offsetTop - 10, behavior: "smooth" });
+  window.scrollTo({top:document.getElementById("formCard").offsetTop-10,behavior:"smooth"});
 }
 
-async function post(payload) {
-  const res = await fetch(SCRIPT_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({ secret: SECRET, ...payload })
-  });
+async function post(payload){
+  const res=await fetch(SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body:JSON.stringify({secret:SECRET,...payload})});
   return res.json();
 }
 
-async function saveListing() {
-  const msg = document.getElementById("msg");
-  const title = document.getElementById("f_title").value.trim();
-  if (!title) { msg.className = "err"; msg.textContent = "Title is required."; return; }
-  const listing = {
-    id: document.getElementById("f_id").value || slugify(title),
-    status: document.getElementById("f_status").value,
+async function saveListing(){
+  const msg=document.getElementById("msg");
+  const title=document.getElementById("f_title").value.trim();
+  if(!title){msg.className="err";msg.textContent="Title is required.";return}
+  const listing={
+    id:document.getElementById("f_id").value||slugify(title),
+    status:document.getElementById("f_status").value,
     title,
-    price: document.getElementById("f_price").value.trim(),
-    size: document.getElementById("f_size").value.trim(),
-    floor: document.getElementById("f_floor").value.trim(),
-    highlights: document.getElementById("f_highlights").value.split("\n").map(s => s.trim()).filter(Boolean),
-    photo: document.getElementById("f_photo").value.trim(),
-    facts_for_ai: document.getElementById("f_facts").value.trim()
+    price:document.getElementById("f_price").value.trim(),
+    size:document.getElementById("f_size").value.trim(),
+    floor:document.getElementById("f_floor").value.trim(),
+    highlights:document.getElementById("f_highlights").value.split("\n").map(s=>s.trim()).filter(Boolean),
+    photos:photos.slice(),
+    facts_for_ai:document.getElementById("f_facts").value.trim()
   };
-  msg.className = ""; msg.textContent = "Saving…";
-  try {
-    const data = await post({ action: "upsert", listing });
-    if (!data.ok) throw new Error(data.error);
-    LISTINGS = data.listings;
-    render();
-    msg.className = "ok"; msg.textContent = "Saved ✓ — live on your site now.";
-    setTimeout(() => { document.getElementById("formCard").classList.add("hidden"); msg.textContent = ""; }, 1200);
-  } catch (e) {
-    msg.className = "err"; msg.textContent = "Save failed: " + e.message;
-  }
+  msg.className="";msg.textContent="Saving…";
+  try{
+    const data=await post({action:"upsert",listing});
+    if(!data.ok)throw new Error(data.error);
+    LISTINGS=data.listings;render();
+    msg.className="ok";msg.textContent="Saved ✓ — live on your site now.";
+    setTimeout(()=>{document.getElementById("formCard").classList.add("hidden");msg.textContent=""},1200);
+  }catch(e){msg.className="err";msg.textContent="Save failed: "+e.message}
 }
-
-async function setStatus(id, status) {
-  try {
-    const data = await post({ action: "setStatus", id, status });
-    if (data.ok) { LISTINGS = data.listings; render(); }
-    else alert(data.error);
-  } catch (e) { alert("Failed: " + e.message); }
+async function setStatus(id,status){
+  try{const data=await post({action:"setStatus",id,status});if(data.ok){LISTINGS=data.listings;render()}else alert(data.error)}
+  catch(e){alert("Failed: "+e.message)}
 }
-
-async function removeListing(id) {
-  if (!confirm("Delete this listing permanently? (Tip: 'Mark sold' keeps it as social proof.)")) return;
-  try {
-    const data = await post({ action: "delete", id });
-    if (data.ok) { LISTINGS = data.listings; render(); }
-    else alert(data.error);
-  } catch (e) { alert("Failed: " + e.message); }
+async function removeListing(id){
+  if(!confirm("Delete this listing permanently? (Tip: 'Mark sold' keeps it as social proof.)"))return;
+  try{const data=await post({action:"delete",id});if(data.ok){LISTINGS=data.listings;render()}else alert(data.error)}
+  catch(e){alert("Failed: "+e.message)}
 }
 </script>
 </body>
