@@ -22,6 +22,7 @@
   .btn-ghost{background:#eef1f4;color:var(--ink)}
   .btn-danger{background:#fee2e2;color:var(--accent)}
   .btn-ok{background:#dcfce7;color:var(--ok)}
+  .btn-link{background:#e0e7ff;color:#3730a3;white-space:nowrap}
   .listing{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
   .listing:last-child{border-bottom:none}
   .listing-left{display:flex;gap:10px;align-items:flex-start;min-width:0}
@@ -101,8 +102,12 @@
 
 <script>
 // ============ PASTE YOUR APPS SCRIPT WEB APP URL HERE ============
-const SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxjXbxHrF_V4XyjY-U15ckj6NlipOfdXCkHka78RTsvUBFCjimcRexAVVdagwZKRjbZ/exec";
 // ================================================================
+
+// Base of your public site — the "Copy link" buttons build concierge links from this.
+// When andrewsoh.sg is live, just change this one line to "https://andrewsoh.sg".
+const SITE_BASE = "https://andrewsoh.sg";
 
 let SECRET = "";
 let LISTINGS = [];
@@ -110,6 +115,28 @@ let photos = [];   // working list of photo URLs for the listing being edited
 
 function slugify(t){return t.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"").slice(0,40)}
 function esc(s){const d=document.createElement("div");d.textContent=s||"";return d.innerHTML}
+
+function conciergeLink(id){ return SITE_BASE + "/concierge.html?listing=" + encodeURIComponent(id); }
+function copyLink(id, btn){
+  const url = conciergeLink(id);
+  const done = ()=>{ const t=btn.textContent; btn.textContent="Copied ✓"; setTimeout(()=>btn.textContent=t,1400); };
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(done).catch(()=>fallbackCopy(url,done));
+  } else { fallbackCopy(url,done); }
+}
+function fallbackCopy(url, done){
+  try{
+    const ta=document.createElement("textarea");
+    ta.value=url; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    const ok=document.execCommand("copy"); document.body.removeChild(ta);
+    if(ok){ done(); return; }
+    throw 0;
+  }catch(e){
+    // last resort: show it so the user can copy manually
+    window.prompt("Copy this link (Ctrl/Cmd+C):", url);
+  }
+}
 
 async function connect(){
   SECRET=document.getElementById("secret").value.trim();
@@ -138,6 +165,7 @@ function render(){
       </div></div>
       <div class="actions">
         <button class="btn-small btn-ghost" onclick="editListing('${L.id}')">Edit</button>
+        <button class="btn-small btn-link" onclick="copyLink('${L.id}',this)">🔗 Copy link</button>
         ${L.status==="available"
           ?`<button class="btn-small btn-danger" onclick="setStatus('${L.id}','sold')">Mark sold</button>`
           :`<button class="btn-small btn-ok" onclick="setStatus('${L.id}','available')">Relist</button>`}
