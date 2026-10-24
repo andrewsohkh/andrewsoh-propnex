@@ -1,0 +1,4 @@
+news-crew/out/
+news-crew/.env
+__pycache__/
+*.bak*

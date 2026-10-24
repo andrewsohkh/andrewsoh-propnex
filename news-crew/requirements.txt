@@ -1,0 +1,6 @@
+crewai==1.14.7
+anthropic==0.111.0
+tavily-python==0.7.26
+python-dotenv==1.2.2
+requests==2.34.2
+feedparser==6.0.12
