@@ -37,7 +37,7 @@ jobs:
           RAG_BASE_URL:      ${{ secrets.RAG_BASE_URL }}
           RAG_USERNAME:      ${{ secrets.RAG_USERNAME }}
           RAG_PASSWORD:      ${{ secrets.RAG_PASSWORD }}
-        run: python news_crew.py --type daily
+        run: python news_crew.py --type daily --dry-run   # RAG paused (Nov 2026); remove --dry-run when rag.gradientedgeai.com is back
 
       - name: Build market-news.json (fails if no fresh brief today)
         run: python news-crew/publish_json.py
