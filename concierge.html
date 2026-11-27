@@ -336,6 +336,15 @@ const AGENT_EMAIL = "andrewsohkh@gmail.com";
 const LEAD_WEBHOOK = "https://script.google.com/macros/s/AKfycbyyuOdtXazYqTyXfMLlTIcst0ca02JgLwYtDv6k_S6Nt3WOtf45hmav8UvAyunXol8WhQ/exec";
 const LEAD_TOKEN = "pnx-lead-7f3a";
 const LISTINGS_URL = "https://script.google.com/macros/s/AKfycbxjXbxHrF_V4XyjY-U15ckj6NlipOfdXCkHka78RTsvUBFCjimcRexAVVdagwZKRjbZ/exec"; // live listings backend (same Sheet as admin-listings.html)
+// Live web search (Anthropic server tool) — restricted to official SG sources so
+// policy answers (wait-out periods, ABSD, LTV, MOP, ceilings) are always current.
+const SEARCH_TOOL = {
+  type: "web_search_20250305",
+  name: "web_search",
+  max_uses: 2,
+  allowed_domains: ["hdb.gov.sg", "mnd.gov.sg", "iras.gov.sg", "cpf.gov.sg", "mas.gov.sg", "ura.gov.sg", "gov.sg"],
+  user_location: { type: "approximate", city: "Singapore", country: "SG", timezone: "Asia/Singapore" }
+};
 const AGENT = {
   name: "Andrew",
   agency: "PropNex",
@@ -610,7 +619,14 @@ CONVERSATION STYLE
 
 SINGAPORE PROPERTY KNOWLEDGE (general framing only)
 - Explain in GENERAL terms: BSD & ABSD, LTV, TDSR (~55%) and MSR (~30% for HDB/EC), CPF usage, HDB eligibility (BTO/resale, MOP, income ceilings), EC eligibility, buy process (OTP → exercise → completion), sell process.
-- Rates and rules change. NEVER present figures as definitive personalised financial/legal/tax advice. Frame as general guidance, point to official sources (IRAS, HDB, CPF, MAS), recommend confirming with ${AGENT.name}. If unsure of a current number, say so.
+- Rates and rules change. NEVER present figures as definitive personalised financial/legal/tax advice. Frame as general guidance, point to official sources (IRAS, HDB, CPF, MAS), recommend confirming with ${AGENT.name}.
+
+CURRENT POLICY — ALWAYS VERIFY (today is ${new Date().toLocaleDateString("en-SG", { timeZone: "Asia/Singapore", day: "numeric", month: "long", year: "numeric" })})
+- Your built-in knowledge of Singapore property rules may be OUT OF DATE. Before stating ANY specific rule, rate or period — wait-out periods, ABSD/BSD/SSD rates, LTV, TDSR/MSR, MOP, income ceilings, grants, eligibility conditions — use the web_search tool to check the official source first. Never state such a figure from memory alone.
+- If the search finds nothing clear, say the rule may have changed and that ${AGENT.name} will confirm — do not guess.
+- When you use a searched fact, end that point with a short source tag, e.g. "(Source: hdb.gov.sg)".
+- Do not write any text before or between searches; output only the final JSON object.
+- Do not open with filler like "Great question!".
 
 GUARDRAILS
 - Do NOT invent specific live listings, prices or availability unless they appear in RETRIEVED CONTEXT or ANDREW'S LIVE LISTINGS below. Otherwise say ${AGENT.name} will send current matching options and capture preferences.
@@ -815,23 +831,48 @@ function PropertyAgent() {
     setLoading(true);
     try {
       const context = await retrieveContext(text);
-      const res = await fetch(`${WORKER_URL}/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 1000,
-          system: systemPrompt(JSON.stringify(lead), context, listingsBlock(listings, focusListing)),
-          messages: newMsgs.map(m => ({
-            role: m.role,
-            content: m.content
-          }))
-        })
-      });
-      const data = await res.json();
-      let raw = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("\n").trim();
+      const baseBody = {
+        model: "claude-sonnet-4-6",
+        max_tokens: 1500,
+        system: systemPrompt(JSON.stringify(lead), context, listingsBlock(listings, focusListing)),
+        messages: newMsgs.map(m => ({
+          role: m.role,
+          content: m.content
+        }))
+      };
+      const callChat = async body => {
+        const r = await fetch(`${WORKER_URL}/chat`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(body)
+        });
+        return r.json();
+      };
+      // 1) Try with live web search. Server tools can return stop_reason
+      //    "pause_turn" — resend the partial turn so Claude can finish.
+      let data = null;
+      try {
+        let body = { ...baseBody, tools: [SEARCH_TOOL] };
+        data = await callChat(body);
+        for (let i = 0; i < 2 && data && data.stop_reason === "pause_turn"; i++) {
+          body = { ...body, messages: [...body.messages, { role: "assistant", content: data.content }] };
+          data = await callChat(body);
+        }
+        if (!data || data.type === "error" || data.error || !Array.isArray(data.content)) data = null;
+      } catch (_) {
+        data = null;
+      }
+      // 2) Fallback: if search is unavailable (Worker strips tools, org setting off, etc.)
+      //    answer without it so the concierge never goes down.
+      if (!data) data = await callChat(baseBody);
+      const blocks = data.content || [];
+      // Only the text AFTER the last search result is the final answer; join without
+      // separators because citations split one JSON string across several text blocks.
+      let lastSearch = -1;
+      blocks.forEach((b, i) => { if (b.type === "web_search_tool_result") lastSearch = i; });
+      let raw = blocks.slice(lastSearch + 1).filter(b => b.type === "text").map(b => b.text).join("").trim();
       raw = raw.replace(/```json/gi, "").replace(/```/g, "").trim();
       const _a = raw.indexOf("{"),
         _z = raw.lastIndexOf("}");
@@ -845,9 +886,15 @@ function PropertyAgent() {
         setQuickReplies([]);
         return;
       }
+      // Surface the official sites the answer was grounded on.
+      const srcHosts = [...new Set(blocks.flatMap(b => (b.citations || []).map(c => {
+        try { return new URL(c.url).hostname.replace(/^www\./, ""); } catch (_) { return null; }
+      })).filter(Boolean))];
+      let replyText = parsed.reply || "…";
+      if (srcHosts.length && !/source/i.test(replyText)) replyText += `\n\nSource: ${srcHosts.slice(0, 3).join(", ")}`;
       setMessages(m => [...m, {
         role: "assistant",
-        content: parsed.reply || "…"
+        content: replyText
       }]);
       if (parsed.lead) setLead(prev => {
         const merged = {
