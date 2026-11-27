@@ -352,6 +352,59 @@ const SEARCH_TOOL = {
   ]
   // (no user_location: the search tool rejects country "SG"; allowed_domains keeps results Singapore-focused)
 };
+// Official HDB resale transactions (data.gov.sg, no key needed) — exposed to Claude as a client-side tool.
+const HDB_RESALE_ID = "d_8b84c4ee58e3cfc0ece0d773c8ca6abc";
+const HDB_TOWNS = ["ANG MO KIO","BEDOK","BISHAN","BUKIT BATOK","BUKIT MERAH","BUKIT PANJANG","BUKIT TIMAH","CENTRAL AREA","CHOA CHU KANG","CLEMENTI","GEYLANG","HOUGANG","JURONG EAST","JURONG WEST","KALLANG/WHAMPOA","MARINE PARADE","PASIR RIS","PUNGGOL","QUEENSTOWN","SEMBAWANG","SENGKANG","SERANGOON","TAMPINES","TOA PAYOH","WOODLANDS","YISHUN"];
+const HDB_TOOL = {
+  name: "hdb_resale_prices",
+  description: "Official HDB resale transactions (HDB via data.gov.sg, updated monthly). Use for any question about HDB resale prices in a town. Returns count, median/min/max price, median $psf and the latest deals for the period.",
+  input_schema: {
+    type: "object",
+    properties: {
+      town: { type: "string", enum: HDB_TOWNS, description: "HDB town. Whampoa/Kallang = KALLANG/WHAMPOA; Tanjong Pagar/Downtown = CENTRAL AREA." },
+      flat_type: { type: "string", enum: ["1 ROOM","2 ROOM","3 ROOM","4 ROOM","5 ROOM","EXECUTIVE","MULTI-GENERATION"] },
+      months: { type: "integer", minimum: 1, maximum: 24, description: "Look-back window in months (default 6)" },
+      street: { type: "string", description: "Optional street name filter, e.g. 'LOR 1 TOA PAYOH'" }
+    },
+    required: ["town"]
+  }
+};
+async function hdbResalePrices({ town, flat_type, months = 6, street }) {
+  try {
+    const filters = { town: String(town || "").toUpperCase() };
+    if (flat_type) filters.flat_type = flat_type;
+    const u = `https://data.gov.sg/api/action/datastore_search?resource_id=${HDB_RESALE_ID}&limit=2000&sort=${encodeURIComponent("month desc")}&filters=${encodeURIComponent(JSON.stringify(filters))}`;
+    const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 8000);
+    const r = await fetch(u, { signal: ctl.signal }); clearTimeout(tm);
+    if (!r.ok) return { error: `data.gov.sg returned ${r.status}` };
+    let recs = ((await r.json()).result || {}).records || [];
+    if (!recs.length) return { error: "no transactions found for that town / flat type" };
+    const latest = recs[0].month;
+    const [y, m] = latest.split("-").map(Number);
+    const start = new Date(y, m - 1 - (Math.min(Math.max(months || 6, 1), 24) - 1), 1);
+    const startStr = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}`;
+    recs = recs.filter(x => x.month >= startStr);
+    if (street) recs = recs.filter(x => x.street_name.includes(String(street).toUpperCase()));
+    if (!recs.length) return { error: "no transactions in that period / street" };
+    const prices = recs.map(x => +x.resale_price).sort((a, b) => a - b);
+    const psfs = recs.map(x => +x.resale_price / (+x.floor_area_sqm * 10.7639)).sort((a, b) => a - b);
+    const med = a => a.length % 2 ? a[(a.length - 1) / 2] : (a[a.length / 2 - 1] + a[a.length / 2]) / 2;
+    return {
+      source: "HDB resale transactions via data.gov.sg",
+      town: filters.town, flat_type: flat_type || "all", period: `${startStr} to ${latest}`,
+      transactions: recs.length,
+      median_price: Math.round(med(prices)), min_price: prices[0], max_price: prices[prices.length - 1],
+      median_psf: Math.round(med(psfs)),
+      latest_deals: recs.slice(0, 6).map(x => `${x.month} Blk ${x.block} ${x.street_name}, ${x.flat_type}, storey ${x.storey_range}, ${x.floor_area_sqm}sqm, lease from ${x.lease_commence_date}: $${(+x.resale_price).toLocaleString()}`)
+    };
+  } catch (e) {
+    return { error: "HDB data temporarily unavailable" };
+  }
+}
+async function runLocalTool(name, input) {
+  if (name === "hdb_resale_prices") return hdbResalePrices(input || {});
+  return { error: `unknown tool ${name}` };
+}
 const AGENT = {
   name: "Andrew",
   agency: "PropNex",
@@ -634,6 +687,7 @@ CURRENT POLICY — ALWAYS VERIFY (today is ${new Date().toLocaleDateString("en-S
 - When you use a searched fact, end that point with a short source tag, e.g. "(Source: hdb.gov.sg)".
 - Official sites keep OLD pages online, so search results can contradict each other. The most RECENT dated announcement always wins. For any wait-out, ABSD, LTV, MOP or eligibility question, also search for the latest change to that rule (e.g. "<rule> removed OR revised ${new Date().getFullYear()}") before answering.
 - SOURCE PRIORITY: for rules, rates and eligibility, official .gov.sg sites win over property media.
+- HDB RESALE PRICES: for any HDB resale price question about a town, call the hdb_resale_prices tool (official HDB transactions) instead of web search. Quote the median, range, number of deals, period and median $psf, and tag it "(Source: HDB via data.gov.sg)". If the visitor hasn't said the flat type, use the most likely one or ask.
 - PRICES: prefer OFFICIAL data first — URA (ura.gov.sg: private property price index, caveated transactions) for condos/landed, HDB (hdb.gov.sg) and data.gov.sg (HDB resale transactions) for HDB flats. Then use property sites (EdgeProp, 99.co, PropertyGuru, SRX, Stacked Homes) for project-level psf, recent deals and area news. Name the source and period, and say figures are indicative.
 - Never present or link other agents' or portals' listings; for units for sale, only use ANDREW'S LIVE LISTINGS and offer ${AGENT.name}'s help to source more.
 - Write plain text only inside "reply". Never output citation markup such as <cite> tags or index numbers.
@@ -874,14 +928,23 @@ function PropertyAgent() {
       //    "pause_turn" — resend the partial turn so Claude can finish.
       let data = null;
       try {
-        const deadline = Date.now() + 35000; // whole search attempt capped at 35s
-        let body = { ...baseBody, tools: [SEARCH_TOOL] };
-        data = await callChat(body, 35000);
-        for (let i = 0; i < 2 && data && data.stop_reason === "pause_turn" && deadline - Date.now() > 3000; i++) {
-          body = { ...body, messages: [...body.messages, { role: "assistant", content: data.content }] };
+        const deadline = Date.now() + 40000; // whole tool-using attempt capped at 40s
+        let body = { ...baseBody, tools: [SEARCH_TOOL, HDB_TOOL] };
+        data = await callChat(body, 40000);
+        const more = d => d && (d.stop_reason === "pause_turn" || d.stop_reason === "tool_use");
+        for (let i = 0; i < 4 && more(data) && deadline - Date.now() > 3000; i++) {
+          const msgs = [...body.messages, { role: "assistant", content: data.content }];
+          if (data.stop_reason === "tool_use") {
+            const results = [];
+            for (const b of data.content) {
+              if (b.type === "tool_use") results.push({ type: "tool_result", tool_use_id: b.id, content: JSON.stringify(await runLocalTool(b.name, b.input)) });
+            }
+            msgs.push({ role: "user", content: results });
+          }
+          body = { ...body, messages: msgs };
           data = await callChat(body, deadline - Date.now());
         }
-        if (data && data.stop_reason === "pause_turn") data = null;
+        if (more(data)) data = null;
         if (!data || data.type === "error" || data.error || !Array.isArray(data.content)) data = null;
       } catch (_) {
         data = null;
