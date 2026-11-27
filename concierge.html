@@ -804,7 +804,10 @@ function PropertyAgent() {
   // ── Retrieval via worker (no creds in the browser) ──
   async function retrieveContext(query) {
     try {
+      const ctl = new AbortController();
+      const tm = setTimeout(() => ctl.abort(), 4000); // KB lookup must never block the chat
       const res = await fetch(`${WORKER_URL}/retrieve`, {
+        signal: ctl.signal,
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -815,6 +818,7 @@ function PropertyAgent() {
           top_k: 4
         })
       });
+      clearTimeout(tm);
       if (!res.ok) throw new Error(String(res.status));
       const data = await res.json();
       const chunks = data.chunks || [];
@@ -847,33 +851,38 @@ function PropertyAgent() {
           content: m.content
         }))
       };
-      const callChat = async body => {
+      const callChat = async (body, ms = 30000) => {
+        const ctl = new AbortController();
+        const tm = setTimeout(() => ctl.abort(), ms);
         const r = await fetch(`${WORKER_URL}/chat`, {
+          signal: ctl.signal,
           method: "POST",
           headers: {
             "Content-Type": "application/json"
           },
           body: JSON.stringify(body)
         });
-        return r.json();
+        try { return await r.json(); } finally { clearTimeout(tm); }
       };
       // 1) Try with live web search. Server tools can return stop_reason
       //    "pause_turn" — resend the partial turn so Claude can finish.
       let data = null;
       try {
+        const deadline = Date.now() + 35000; // whole search attempt capped at 35s
         let body = { ...baseBody, tools: [SEARCH_TOOL] };
-        data = await callChat(body);
-        for (let i = 0; i < 2 && data && data.stop_reason === "pause_turn"; i++) {
+        data = await callChat(body, 35000);
+        for (let i = 0; i < 2 && data && data.stop_reason === "pause_turn" && deadline - Date.now() > 3000; i++) {
           body = { ...body, messages: [...body.messages, { role: "assistant", content: data.content }] };
-          data = await callChat(body);
+          data = await callChat(body, deadline - Date.now());
         }
+        if (data && data.stop_reason === "pause_turn") data = null;
         if (!data || data.type === "error" || data.error || !Array.isArray(data.content)) data = null;
       } catch (_) {
         data = null;
       }
       // 2) Fallback: if search is unavailable (Worker strips tools, org setting off, etc.)
       //    answer without it so the concierge never goes down.
-      if (!data) data = await callChat(baseBody);
+      if (!data) data = await callChat(baseBody, 25000);
       const blocks = data.content || [];
       // Only the text AFTER the last search result is the final answer; join without
       // separators because citations split one JSON string across several text blocks.
