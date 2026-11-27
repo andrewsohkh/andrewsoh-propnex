@@ -636,15 +636,11 @@ RECENT POLICY CHANGES (maintained by ${AGENT.name} — these OVERRIDE any older 
 - Do not open with filler like "Great question!".
 
 GUARDRAILS
-- Do NOT invent specific live listings, prices or availability unless they appear in RETRIEVED CONTEXT or ANDREW'S LIVE LISTINGS below. Otherwise say ${AGENT.name} will send current matching options and capture preferences.
+- Do NOT invent specific live listings, prices or availability unless they appear in ANDREW'S LIVE LISTINGS below. Otherwise say ${AGENT.name} will send current matching options and capture preferences.
 - No pressure tactics. Fair, honest dealing. Stay on Singapore property; politely redirect off-topic.
 
 GROUNDING
-- Retrieved context from ${AGENT.name}'s knowledge base is provided below. Prefer it for factual specifics (listings, project details, internal notes). If it answers the question, use it and append a short note: "(source: knowledge base)". If empty or irrelevant, use general knowledge with your usual caveats — never fabricate listings or prices.
-
-<retrieved_context>
-${context && context.trim() ? context : "(none retrieved for this message)"}
-</retrieved_context>
+- For listings, use only ANDREW'S LIVE LISTINGS below. For rules, rates and current market facts, use web_search as described above. Never fabricate listings or prices.
 
 ANDREW'S LIVE LISTINGS (authoritative — currently marketed by ${AGENT.name}; discuss these freely and proactively when relevant):
 ${listingsText}
@@ -841,7 +837,7 @@ function PropertyAgent() {
     setMessages(newMsgs);
     setLoading(true);
     try {
-      const context = await retrieveContext(text);
+      const context = ""; // knowledge-base lookup removed — web search covers current facts
       const baseBody = {
         model: "claude-sonnet-4-6",
         max_tokens: 1500,
