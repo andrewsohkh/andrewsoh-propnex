@@ -976,7 +976,8 @@ function PropertyAgent() {
         try { return new URL(c.url).hostname.replace(/^www\./, ""); } catch (_) { return null; }
       })).filter(Boolean))];
       let replyText = String(parsed.reply || "…")
-        .replace(/[<(]cite\b[^>]*>/gi, "").replace(/<\/cite>/gi, "").replace(/[ \t]{2,}/g, " ");
+        .replace(/[<(]cite\b[^>]*>/gi, "").replace(/<\/cite>/gi, "").replace(/[ \t]{2,}/g, " ")
+        .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1$2"); // drop *italics* (only **bold** is rendered)
       if (srcHosts.length && !/source/i.test(replyText)) replyText += `\n\nSource: ${srcHosts.slice(0, 3).join(", ")}`;
       setMessages(m => [...m, {
         role: "assistant",
