@@ -342,8 +342,8 @@ const SEARCH_TOOL = {
   type: "web_search_20250305",
   name: "web_search",
   max_uses: 2,
-  allowed_domains: ["hdb.gov.sg", "mnd.gov.sg", "iras.gov.sg", "cpf.gov.sg", "mas.gov.sg", "ura.gov.sg", "gov.sg"],
-  user_location: { type: "approximate", city: "Singapore", country: "SG", timezone: "Asia/Singapore" }
+  allowed_domains: ["hdb.gov.sg", "mnd.gov.sg", "iras.gov.sg", "cpf.gov.sg", "mas.gov.sg", "ura.gov.sg", "gov.sg"]
+  // (no user_location: the search tool rejects country "SG"; allowed_domains keeps results Singapore-official)
 };
 const AGENT = {
   name: "Andrew",
