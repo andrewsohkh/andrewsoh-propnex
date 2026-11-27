@@ -341,7 +341,7 @@ const LISTINGS_URL = "https://script.google.com/macros/s/AKfycbxjXbxHrF_V4XyjY-U
 const SEARCH_TOOL = {
   type: "web_search_20250305",
   name: "web_search",
-  max_uses: 2,
+  max_uses: 3,
   allowed_domains: ["hdb.gov.sg", "mnd.gov.sg", "iras.gov.sg", "cpf.gov.sg", "mas.gov.sg", "ura.gov.sg", "gov.sg"]
   // (no user_location: the search tool rejects country "SG"; allowed_domains keeps results Singapore-official)
 };
@@ -625,6 +625,12 @@ CURRENT POLICY — ALWAYS VERIFY (today is ${new Date().toLocaleDateString("en-S
 - Your built-in knowledge of Singapore property rules may be OUT OF DATE. Before stating ANY specific rule, rate or period — wait-out periods, ABSD/BSD/SSD rates, LTV, TDSR/MSR, MOP, income ceilings, grants, eligibility conditions — use the web_search tool to check the official source first. Never state such a figure from memory alone.
 - If the search finds nothing clear, say the rule may have changed and that ${AGENT.name} will confirm — do not guess.
 - When you use a searched fact, end that point with a short source tag, e.g. "(Source: hdb.gov.sg)".
+- Official sites keep OLD pages online, so search results can contradict each other. The most RECENT dated announcement always wins. For any wait-out, ABSD, LTV, MOP or eligibility question, also search for the latest change to that rule (e.g. "<rule> removed OR revised ${new Date().getFullYear()}") before answering.
+- Write plain text only inside "reply". Never output citation markup such as <cite> tags or index numbers.
+
+RECENT POLICY CHANGES (maintained by ${AGENT.name} — these OVERRIDE any older page or search result that says otherwise)
+- 28 Jul 2026: the 15-month wait-out period was REMOVED for private property owners and ex-owners buying a NON-subsidised HDB resale flat WITHOUT an HDB housing loan (all ages, any flat size). The old 55+ / 4-room exemption is therefore no longer relevant.
+- Unchanged: a 30-month wait-out still applies after disposing of private property for SUBSIDISED purchases (BTO, resale with CPF housing grants, EC from developer) and when taking an HDB housing loan.
 - Do not write any text before or between searches; output only the final JSON object.
 - NEVER reply with a promise to check, search or come back later ("let me check…", "let me search…") — the visitor will not get a follow-up message. Every reply must already contain the verified answer, or, if you could not verify it, say plainly that the rule may have changed recently and ${AGENT.name} will confirm the latest position, then continue qualifying.
 - Do not open with filler like "Great question!".
@@ -891,7 +897,8 @@ function PropertyAgent() {
       const srcHosts = [...new Set(blocks.flatMap(b => (b.citations || []).map(c => {
         try { return new URL(c.url).hostname.replace(/^www\./, ""); } catch (_) { return null; }
       })).filter(Boolean))];
-      let replyText = parsed.reply || "…";
+      let replyText = String(parsed.reply || "…")
+        .replace(/[<(]cite\b[^>]*>/gi, "").replace(/<\/cite>/gi, "").replace(/[ \t]{2,}/g, " ");
       if (srcHosts.length && !/source/i.test(replyText)) replyText += `\n\nSource: ${srcHosts.slice(0, 3).join(", ")}`;
       setMessages(m => [...m, {
         role: "assistant",
